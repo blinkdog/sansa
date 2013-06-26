@@ -7,12 +7,19 @@ events = require 'events'
 
 outputs = new events.EventEmitter()
 
+exports.clear = ->
+    outputs.removeAllListeners()
+
 exports.registerOutput = (output) ->
     outputs.addListener 'save', output
 
 exports.save = (obj) ->
     uuid = obj.uuid ? newUuid()
-    outputs.emit 'save', uuid, JSON.stringify(obj), obj, obj
+    dObj = dehydrate obj
+    outputs.emit 'save', uuid, JSON.stringify(obj), dObj, obj
+
+dehydrate = (obj) ->
+    {}
 
 # See: http://stackoverflow.com/a/2117523
 newUuid = ->
