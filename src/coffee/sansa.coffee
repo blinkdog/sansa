@@ -19,7 +19,11 @@ exports.save = (obj) ->
     outputs.emit 'save', uuid, JSON.stringify(obj), dObj, obj
 
 dehydrate = (obj) ->
-    {}
+    dObj = {}
+    for key of obj
+        if key is 'uuid'
+            dObj.uuid = new String obj[key]
+    return dObj
 
 # See: http://stackoverflow.com/a/2117523
 newUuid = ->
