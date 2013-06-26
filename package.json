@@ -1,0 +1,18 @@
+{
+    "name": "sansa",
+    "version": "0.0.1",
+    "dependencies": {
+        "coffee-script": "1.6.x"
+    },
+    "devDependencies": {
+        "jasmine-node": "1.7.x"
+    },
+    "engines": {
+        "node": "0.10.x"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/blinkdog/sansa.git"
+    },
+    "license" : "Copyright 2013 Patrick Meade. All rights reserved."
+}
