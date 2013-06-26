@@ -46,5 +46,20 @@ describe 'sansa', ->
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
+        it "will preserve boolean properties if present", ->
+            testObj =
+              uuid: "55770a64-75c9-4ec8-baa5-d93e5fc7f6b1"
+              trueDat: true
+              falseDat: false
+            sansaOutput = (uuid, json, dObj, sObj) ->
+              expect(dObj.uuid).toBeDefined()
+              expect(dObj.uuid).toEqual "55770a64-75c9-4ec8-baa5-d93e5fc7f6b1"
+              expect(dObj.trueDat).toBeDefined()
+              expect(dObj.trueDat).toEqual true
+              expect(dObj.falseDat).toBeDefined()
+              expect(dObj.falseDat).toEqual false
+            sansa.registerOutput sansaOutput
+            sansa.save testObj
+
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee
