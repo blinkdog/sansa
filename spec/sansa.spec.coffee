@@ -76,5 +76,34 @@ describe 'sansa', ->
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
+        it "will filter out function properties if present", ->
+            testObj =
+              uuid: "d3998b48-9e49-41fe-9c48-6aeeb4e46721"
+              square: (x) -> (x*x)
+              cube: (x) -> (x * square x)
+            sansaOutput = (uuid, json, dObj, sObj) ->
+              expect(dObj.uuid).toBeDefined()
+              expect(dObj.uuid).toEqual "d3998b48-9e49-41fe-9c48-6aeeb4e46721"
+              expect(dObj.square).not.toBeDefined()
+              expect(dObj.cube).not.toBeDefined()
+            sansa.registerOutput sansaOutput
+            sansa.save testObj
+
+        it "will convert Date objects to a special format", ->
+            testObj =
+              uuid: "71746867-4359-4910-b126-72af066eef23"
+              birthdate: new Date(1372219379607)
+            sansaOutput = (uuid, json, dObj, sObj) ->
+              expect(dObj.uuid).toBeDefined()
+              expect(dObj.uuid).toEqual "71746867-4359-4910-b126-72af066eef23"
+              expect(dObj.birthdate).toBeDefined()
+              expect(dObj.birthdate._sansa).toBeDefined()
+              expect(dObj.birthdate._sansa.type).toBeDefined()
+              expect(dObj.birthdate._sansa.type).toEqual "Date"
+              expect(dObj.birthdate._sansa.time).toBeDefined()
+              expect(dObj.birthdate._sansa.time).toEqual 1372219379607
+            sansa.registerOutput sansaOutput
+            sansa.save testObj
+
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee

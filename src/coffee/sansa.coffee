@@ -22,9 +22,14 @@ dehydrate = (obj) ->
     dObj = {}
     for key of obj
       switch typeof obj[key]
-        when "boolean" then dObj[key] = obj[key]
-        when "number" then dObj[key] = obj[key]
-        when "string" then dObj[key] = obj[key]
+        when "boolean", "number", "string"
+          dObj[key] = obj[key]
+        when "object"
+          if obj[key] instanceof Date
+              dObj[key] =
+                _sansa:
+                  type: "Date"
+                  time: obj[key].getTime()
     return dObj
 
 # See: http://stackoverflow.com/a/2117523
