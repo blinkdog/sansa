@@ -92,7 +92,7 @@ describe 'sansa', ->
         it "will convert Date objects to a special format", ->
             testObj =
               uuid: "71746867-4359-4910-b126-72af066eef23"
-              birthdate: new Date(1372219379607)
+              birthdate: new Date 1372219379607
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(dObj.uuid).toBeDefined()
               expect(dObj.uuid).toEqual "71746867-4359-4910-b126-72af066eef23"
@@ -102,6 +102,32 @@ describe 'sansa', ->
               expect(dObj.birthdate._sansa.type).toEqual "Date"
               expect(dObj.birthdate._sansa.time).toBeDefined()
               expect(dObj.birthdate._sansa.time).toEqual 1372219379607
+            sansa.registerOutput sansaOutput
+            sansa.save testObj
+
+        it "will provide the JSON output of the new serialization object", ->
+            testObj =
+              uuid: "847a985a-c560-4b4e-9e8e-0405a750851b"
+              birthdate: new Date 1372220411502
+            sansaOutput = (uuid, json, dObj, sObj) ->
+              expect(dObj.uuid).toBeDefined()
+              expect(dObj.uuid).toEqual "847a985a-c560-4b4e-9e8e-0405a750851b"
+              expect(dObj.birthdate).toBeDefined()
+              expect(dObj.birthdate._sansa).toBeDefined()
+              expect(dObj.birthdate._sansa.type).toBeDefined()
+              expect(dObj.birthdate._sansa.type).toEqual "Date"
+              expect(dObj.birthdate._sansa.time).toBeDefined()
+              expect(dObj.birthdate._sansa.time).toEqual 1372220411502
+              expect(json).toBeDefined()
+              checkObj = JSON.parse json
+              expect(checkObj.uuid).toBeDefined()
+              expect(checkObj.uuid).toEqual "847a985a-c560-4b4e-9e8e-0405a750851b"
+              expect(checkObj.birthdate).toBeDefined()
+              expect(checkObj.birthdate._sansa).toBeDefined()
+              expect(checkObj.birthdate._sansa.type).toBeDefined()
+              expect(checkObj.birthdate._sansa.type).toEqual "Date"
+              expect(checkObj.birthdate._sansa.time).toBeDefined()
+              expect(checkObj.birthdate._sansa.time).toEqual 1372220411502
             sansa.registerOutput sansaOutput
             sansa.save testObj
 

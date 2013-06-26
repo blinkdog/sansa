@@ -16,7 +16,7 @@ exports.registerOutput = (output) ->
 exports.save = (obj) ->
     uuid = obj.uuid ? newUuid()
     dObj = dehydrate obj
-    outputs.emit 'save', uuid, JSON.stringify(obj), dObj, obj
+    outputs.emit 'save', uuid, JSON.stringify(dObj), dObj, obj
 
 dehydrate = (obj) ->
     dObj = {}
