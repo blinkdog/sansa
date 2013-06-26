@@ -11,7 +11,8 @@ exports.registerOutput = (output) ->
     outputs.addListener 'save', output
 
 exports.save = (obj) ->
-    outputs.emit 'save', newUuid(), JSON.stringify(obj), obj, obj
+    uuid = obj.uuid ? newUuid()
+    outputs.emit 'save', uuid, JSON.stringify(obj), obj, obj
 
 # See: http://stackoverflow.com/a/2117523
 newUuid = ->

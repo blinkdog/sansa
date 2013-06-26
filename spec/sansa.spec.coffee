@@ -17,5 +17,12 @@ describe 'sansa', ->
         sansa.registerOutput sansaOutput
         sansa.save {}
 
+    it "will use the UUID of identified objects", ->
+        sansaOutput = (uuid, json, dObj, sObj) ->
+          expect(UUID_REGEXP.test uuid).toBe true
+          expect(uuid).toEqual "61d8375b-54fa-45fb-9f1c-c745370b268f"
+        sansa.registerOutput sansaOutput
+        sansa.save { uuid: "61d8375b-54fa-45fb-9f1c-c745370b268f" }
+
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee
