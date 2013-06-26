@@ -61,5 +61,20 @@ describe 'sansa', ->
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
+        it "will preserve number properties if present", ->
+            testObj =
+              uuid: "743e621f-4431-4036-9cde-120dc77821d0"
+              answerInt: 42
+              answerFloat: 42.5
+            sansaOutput = (uuid, json, dObj, sObj) ->
+              expect(dObj.uuid).toBeDefined()
+              expect(dObj.uuid).toEqual "743e621f-4431-4036-9cde-120dc77821d0"
+              expect(dObj.answerInt).toBeDefined()
+              expect(dObj.answerInt).toEqual 42
+              expect(dObj.answerFloat).toBeDefined()
+              expect(dObj.answerFloat).toEqual 42.5
+            sansa.registerOutput sansaOutput
+            sansa.save testObj
+
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee
