@@ -34,7 +34,10 @@ identify = (obj) ->
   obj[SANSA_TAG] = newUuid()
 
 dehydrate = (context, obj) ->
-  dObj = {}
+  # create an appropriate destination object
+  dObj = [] if obj instanceof Array
+  dObj ?= {}
+  # dehydrate the source object into the destination object
   for key of obj
     switch typeof obj[key]
       when "boolean", "number", "string"
@@ -42,6 +45,8 @@ dehydrate = (context, obj) ->
       when "object"
         if obj[key] instanceof Date
           dObj[LANGLE+key] = obj[key].getTime()
+        else if obj[key] instanceof Array
+          dObj[key] = dehydrate context, obj[key]
         else
           uuid = identify obj[key]
           if not context[uuid]?

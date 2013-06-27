@@ -155,5 +155,37 @@ describe 'sansa', ->
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
+        it "will preserve empty arrays if present", ->
+          testObj =
+            uuid: "99128faf-523d-468b-9c30-a64348a8d96f"
+            myEmptyArray: []
+          sansaOutput = (uuid, json, dObj, sObj) ->
+            expect(dObj.uuid).toBeDefined()
+            expect(dObj.uuid).toEqual "99128faf-523d-468b-9c30-a64348a8d96f"
+            expect(dObj.myEmptyArray).toBeDefined()
+            expect(dObj.myEmptyArray.length).toEqual 0
+          sansa.registerOutput sansaOutput
+          sansa.save testObj
+
+        it "will preserve arrays containing booleans, numbers, and strings", ->
+          testObj =
+            uuid: "5548fe5c-61f3-4372-a8bd-8ddc7741a7b6"
+            myArray: [false, true, 42, 42.5, "foo", "bar", "baz"]
+          sansaOutput = (uuid, json, dObj, sObj) ->
+            console.log dObj
+            expect(dObj.uuid).toBeDefined()
+            expect(dObj.uuid).toEqual "5548fe5c-61f3-4372-a8bd-8ddc7741a7b6"
+            expect(dObj.myArray).toBeDefined()
+            expect(dObj.myArray.length).toEqual 7
+            expect(dObj.myArray[0]).toEqual false
+            expect(dObj.myArray[1]).toEqual true
+            expect(dObj.myArray[2]).toEqual 42
+            expect(dObj.myArray[3]).toEqual 42.5
+            expect(dObj.myArray[4]).toEqual "foo"
+            expect(dObj.myArray[5]).toEqual "bar"
+            expect(dObj.myArray[6]).toEqual "baz"
+          sansa.registerOutput sansaOutput
+          sansa.save testObj
+
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee
