@@ -18,19 +18,34 @@ describe 'sansa', ->
       it "will generate proper v4 UUIDs", ->
         expect(UUID_REGEXP.test sansa.newUuid()).toBe true
 
+    describe "SANSA_ID", ->
+      it "is equal to '«sansa'", ->
+        expect(sansa.SANSA_ID).toBe '«sansa'
+
     describe "serialization", ->
+        LANGLE = sansa.LANGLE 
+        SANSA_ID = sansa.SANSA_ID
         it "will generate a UUID for unidentified objects", ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(UUID_REGEXP.test uuid).toBe true
             sansa.registerOutput sansaOutput
             sansa.save {}
 
-        it "will use the 'uuid' property of identified objects", ->
+        it "will not use the 'uuid' property as the identify of objects", ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(UUID_REGEXP.test uuid).toBe true
-              expect(uuid).toEqual "61d8375b-54fa-45fb-9f1c-c745370b268f"
+              expect(uuid).not.toEqual "61d8375b-54fa-45fb-9f1c-c745370b268f"
             sansa.registerOutput sansaOutput
             sansa.save { uuid: "61d8375b-54fa-45fb-9f1c-c745370b268f" }
+
+        it "will tag identified objects with a SANSA_ID", ->
+            sansaOutput = (uuid, json, dObj, sObj) ->
+              expect(UUID_REGEXP.test uuid).toBe true
+              expect(uuid).not.toEqual "602fb225-9b70-4734-9cbf-52a007b80f56"
+              expect(sObj[SANSA_ID]).toBeDefined()
+              expect(UUID_REGEXP.test sObj[SANSA_ID]).toBe true
+            sansa.registerOutput sansaOutput
+            sansa.save { uuid: "602fb225-9b70-4734-9cbf-52a007b80f56" }
 
         it "will generate a new object for serialization", ->
             testObj =
@@ -38,6 +53,20 @@ describe 'sansa', ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(dObj).not.toBe testObj
               expect(sObj).toBe testObj
+            sansa.registerOutput sansaOutput
+            sansa.save testObj
+
+        it "will copy the SANSA_ID property to the serialization object", ->
+            testObj =
+              uuid: "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
+            sansaOutput = (uuid, json, dObj, sObj) ->
+              expect(sObj[SANSA_ID]).toBeDefined()
+              expect(UUID_REGEXP.test sObj[SANSA_ID]).toBe true
+              expect(sObj[SANSA_ID]).not.toEqual "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
+              expect(dObj[SANSA_ID]).toBeDefined()
+              expect(UUID_REGEXP.test dObj[SANSA_ID]).toBe true
+              expect(dObj[SANSA_ID]).not.toEqual "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
+              expect(dObj[SANSA_ID]).toEqual sObj[SANSA_ID]
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
@@ -100,12 +129,9 @@ describe 'sansa', ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(dObj.uuid).toBeDefined()
               expect(dObj.uuid).toEqual "71746867-4359-4910-b126-72af066eef23"
-              expect(dObj.birthdate).toBeDefined()
-              expect(dObj.birthdate._sansa).toBeDefined()
-              expect(dObj.birthdate._sansa.type).toBeDefined()
-              expect(dObj.birthdate._sansa.type).toEqual "Date"
-              expect(dObj.birthdate._sansa.time).toBeDefined()
-              expect(dObj.birthdate._sansa.time).toEqual 1372219379607
+              expect(dObj.birthdate).not.toBeDefined()
+              expect(dObj[LANGLE+"birthdate"]).toBeDefined()
+              expect(dObj[LANGLE+"birthdate"]).toEqual 1372219379607
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
@@ -116,22 +142,16 @@ describe 'sansa', ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(dObj.uuid).toBeDefined()
               expect(dObj.uuid).toEqual "847a985a-c560-4b4e-9e8e-0405a750851b"
-              expect(dObj.birthdate).toBeDefined()
-              expect(dObj.birthdate._sansa).toBeDefined()
-              expect(dObj.birthdate._sansa.type).toBeDefined()
-              expect(dObj.birthdate._sansa.type).toEqual "Date"
-              expect(dObj.birthdate._sansa.time).toBeDefined()
-              expect(dObj.birthdate._sansa.time).toEqual 1372220411502
+              expect(dObj.birthdate).not.toBeDefined()
+              expect(dObj[LANGLE+"birthdate"]).toBeDefined()
+              expect(dObj[LANGLE+"birthdate"]).toEqual 1372220411502
               expect(json).toBeDefined()
               checkObj = JSON.parse json
               expect(checkObj.uuid).toBeDefined()
               expect(checkObj.uuid).toEqual "847a985a-c560-4b4e-9e8e-0405a750851b"
-              expect(checkObj.birthdate).toBeDefined()
-              expect(checkObj.birthdate._sansa).toBeDefined()
-              expect(checkObj.birthdate._sansa.type).toBeDefined()
-              expect(checkObj.birthdate._sansa.type).toEqual "Date"
-              expect(checkObj.birthdate._sansa.time).toBeDefined()
-              expect(checkObj.birthdate._sansa.time).toEqual 1372220411502
+              expect(checkObj.birthdate).not.toBeDefined()
+              expect(checkObj[LANGLE+"birthdate"]).toBeDefined()
+              expect(checkObj[LANGLE+"birthdate"]).toEqual 1372220411502
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
