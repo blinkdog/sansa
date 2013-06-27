@@ -12,6 +12,8 @@ outputs = new events.EventEmitter()
 exports.LANGLE = LANGLE = '«'
 exports.RANGLE = RANGLE = '»'
 exports.SANSA_ID = SANSA_TAG = LANGLE + 'sansa'
+exports.TIME_TAG = TIME_TAG = LANGLE + 'time'
+exports.TYPE_TAG = TYPE_TAG = LANGLE + 'type'
 
 exports.clear = ->
   outputs.removeAllListeners()
@@ -37,6 +39,8 @@ dehydrate = (context, obj) ->
   # create an appropriate destination object
   dObj = [] if obj instanceof Array
   dObj ?= {}
+  # save the type of the source object
+  dObj[TYPE_TAG] = obj.constructor.name if obj.constructor.name.length > 0
   # dehydrate the source object into the destination object
   for key of obj
     switch typeof obj[key]
@@ -44,7 +48,12 @@ dehydrate = (context, obj) ->
         dObj[key] = obj[key]
       when "object"
         if obj[key] instanceof Date
-          dObj[LANGLE+key] = obj[key].getTime()
+          if dObj instanceof Array
+            dateObj = {}
+            dateObj[TIME_TAG] = obj[key].getTime()
+            dObj[key] = dateObj
+          else
+            dObj[LANGLE+key] = obj[key].getTime()
         else if obj[key] instanceof Array
           dObj[key] = dehydrate context, obj[key]
         else

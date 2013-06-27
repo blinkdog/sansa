@@ -25,6 +25,7 @@ describe 'sansa', ->
     describe "serialization", ->
         LANGLE = sansa.LANGLE 
         SANSA_ID = sansa.SANSA_ID
+        TYPE_TAG = sansa.TYPE_TAG
         it "will generate a UUID for unidentified objects", ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(UUID_REGEXP.test uuid).toBe true
@@ -172,7 +173,6 @@ describe 'sansa', ->
             uuid: "5548fe5c-61f3-4372-a8bd-8ddc7741a7b6"
             myArray: [false, true, 42, 42.5, "foo", "bar", "baz"]
           sansaOutput = (uuid, json, dObj, sObj) ->
-            console.log dObj
             expect(dObj.uuid).toBeDefined()
             expect(dObj.uuid).toEqual "5548fe5c-61f3-4372-a8bd-8ddc7741a7b6"
             expect(dObj.myArray).toBeDefined()
@@ -184,6 +184,70 @@ describe 'sansa', ->
             expect(dObj.myArray[4]).toEqual "foo"
             expect(dObj.myArray[5]).toEqual "bar"
             expect(dObj.myArray[6]).toEqual "baz"
+          sansa.registerOutput sansaOutput
+          sansa.save testObj
+
+        it "will preserve Date objects in arrays", ->
+          testObj =
+            uuid: "bab84f42-6970-432b-90df-d68474aac418"
+            myArray: [
+              new Date(1372220411502),
+              new Date(1372221411502),
+              new Date(1372222411502),
+              new Date(1372223411502) ]
+          sansaOutput = (uuid, json, dObj, sObj) ->
+            expect(dObj.uuid).toBeDefined()
+            expect(dObj.uuid).toEqual "bab84f42-6970-432b-90df-d68474aac418"
+            expect(dObj.myArray).toBeDefined()
+            expect(dObj.myArray.length).toEqual 4
+            expect(dObj.myArray[0]).toEqual { '«time': 1372220411502 }
+            expect(dObj.myArray[1]).toEqual { '«time': 1372221411502 }
+            expect(dObj.myArray[2]).toEqual { '«time': 1372222411502 }
+            expect(dObj.myArray[3]).toEqual { '«time': 1372223411502 }
+          sansa.registerOutput sansaOutput
+          sansa.save testObj
+
+        it "will save the object type in the serialization object", ->
+          class ComplexNumber
+            constructor: (@r,@i) ->
+          testObj = new ComplexNumber(3,2)
+          testObj.uuid = "e2134bf9-a8ca-40dc-8555-ff73f8c6171d"
+          sansaOutput = (uuid, json, dObj, sObj) ->
+            expect(dObj.uuid).toBeDefined()
+            expect(dObj.uuid).toEqual "e2134bf9-a8ca-40dc-8555-ff73f8c6171d"
+            expect(dObj[TYPE_TAG]).toBeDefined()
+            expect(dObj[TYPE_TAG]).toEqual 'ComplexNumber'
+            expect(dObj.r).toEqual 3
+            expect(dObj.i).toEqual 2
+          sansa.registerOutput sansaOutput
+          sansa.save testObj
+
+        it "will not save the object type in the source object", ->
+          class ComplexNumber
+            constructor: (@r,@i) ->
+          testObj = new ComplexNumber(3,2)
+          testObj.uuid = "b21b6d0c-ed3f-4ae8-9ad4-573c1f641628"
+          sansaOutput = (uuid, json, dObj, sObj) ->
+            expect(dObj.uuid).toBeDefined()
+            expect(dObj.uuid).toEqual "b21b6d0c-ed3f-4ae8-9ad4-573c1f641628"
+            expect(dObj[TYPE_TAG]).toBeDefined()
+            expect(dObj[TYPE_TAG]).toEqual 'ComplexNumber'
+            expect(sObj[TYPE_TAG]).not.toBeDefined()
+          sansa.registerOutput sansaOutput
+          sansa.save testObj
+
+        it "will not save empty constructor names in the serialization object", ->
+          ComplexNumber = (r,i) ->
+            @r=r
+            @i=i
+          testObj = new ComplexNumber(3,2)
+          testObj.uuid = "1290b1c0-eb20-4667-9550-ebfb410647f0"
+          sansaOutput = (uuid, json, dObj, sObj) ->
+            expect(dObj.uuid).toBeDefined()
+            expect(dObj.uuid).toEqual "1290b1c0-eb20-4667-9550-ebfb410647f0"
+            expect(dObj[TYPE_TAG]).not.toBeDefined()
+            expect(dObj.r).toEqual 3
+            expect(dObj.i).toEqual 2
           sansa.registerOutput sansaOutput
           sansa.save testObj
 
