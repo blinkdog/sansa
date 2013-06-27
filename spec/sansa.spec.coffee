@@ -13,7 +13,11 @@ describe 'sansa', ->
     it "will obey the laws of logic", ->
         expect(false).toBe false
         expect(true).toBe true
-        
+
+    describe "newUuid", ->
+      it "will generate proper v4 UUIDs", ->
+        expect(UUID_REGEXP.test sansa.newUuid()).toBe true
+
     describe "serialization", ->
         it "will generate a UUID for unidentified objects", ->
             sansaOutput = (uuid, json, dObj, sObj) ->

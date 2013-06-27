@@ -26,20 +26,20 @@ dehydrate = (obj) ->
           dObj[key] = obj[key]
         when "object"
           if obj[key] instanceof Date
-              dObj[key] =
-                _sansa:
-                  type: "Date"
-                  time: obj[key].getTime()
+            dObj[key] =
+              _sansa:
+                type: "Date"
+                time: obj[key].getTime()
     return dObj
 
 # See: http://stackoverflow.com/a/2117523
-newUuid = ->
+exports.newUuid = newUuid = ->
+  rndBuf = crypto.randomBytes 32
+  count = 0
   "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace /[xy]/g, (c) ->
-    rndBuf = crypto.randomBytes 1
-    rndByte = rndBuf.readUInt8(0) & 0x0f
-    resByte = rndByte if c is "x"
-    resByte = ((rndByte & 0x03) | 0x08) if c is "y"
-    return resByte.toString 16
-        
+    rndByte = rndBuf.readUInt8(count++) & 0x0f
+    rndByte = ((rndByte & 0x03) | 0x08) if c is "y"
+    return rndByte.toString 16
+
 #----------------------------------------------------------------------
 # end of sansa.coffee
