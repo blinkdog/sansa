@@ -9,11 +9,8 @@ events = require 'events'
 
 outputs = new events.EventEmitter()
 
-exports.LANGLE = LANGLE = '«'
 exports.RANGLE = RANGLE = '»'
-exports.SANSA_ID = SANSA_TAG = LANGLE + 'sansa'
-exports.TIME_TAG = TIME_TAG = LANGLE + 'time'
-exports.TYPE_TAG = TYPE_TAG = LANGLE + 'type'
+exports.TYPE_TAG = TYPE_TAG = RANGLE + 'type'
 
 exports.clear = ->
   outputs.removeAllListeners()
@@ -32,15 +29,16 @@ saveObject = (context, obj) ->
   outputs.emit 'save', uuid, JSON.stringify(dObj), dObj, obj
 
 identify = (obj) ->
-  return obj[SANSA_TAG] if obj[SANSA_TAG]? and UUID_REGEXP.test obj[SANSA_TAG]
-  obj[SANSA_TAG] = newUuid()
+  return obj.uuid if obj.uuid? and UUID_REGEXP.test obj.uuid
+  obj.uuid = newUuid()
 
 dehydrate = (context, obj) ->
   # create an appropriate destination object
   dObj = [] if obj instanceof Array
   dObj ?= {}
   # save the type of the source object
-  dObj[TYPE_TAG] = obj.constructor.name if obj.constructor.name.length > 0
+  type = obj.constructor.name
+  dObj[TYPE_TAG] = type if type isnt 'Object' and type.length > 0
   # dehydrate the source object into the destination object
   for key of obj
     switch typeof obj[key]
@@ -48,19 +46,14 @@ dehydrate = (context, obj) ->
         dObj[key] = obj[key]
       when "object"
         if obj[key] instanceof Date
-          if dObj instanceof Array
-            dateObj = {}
-            dateObj[TIME_TAG] = obj[key].getTime()
-            dObj[key] = dateObj
-          else
-            dObj[LANGLE+key] = obj[key].getTime()
+          dObj[key] = RANGLE + obj[key].getTime().toString()
         else if obj[key] instanceof Array
           dObj[key] = dehydrate context, obj[key]
         else
           uuid = identify obj[key]
           if not context[uuid]?
             saveObject obj
-          dObj[RANGLE+key] = uuid
+          dObj[key] = RANGLE + uuid
   return dObj
 
 # See: http://stackoverflow.com/a/2117523

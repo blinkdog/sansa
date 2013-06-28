@@ -3,6 +3,7 @@
 #----------------------------------------------------------------------
 
 UUID_REGEXP = /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/
+UUID_TAG_RE = /»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/
 
 describe 'sansa', ->
     sansa = require '../lib/sansa'
@@ -14,18 +15,22 @@ describe 'sansa', ->
         expect(false).toBe false
         expect(true).toBe true
 
+    describe "JSON.stringify", ->
+      it "cannot handle circular structure", ->
+        x = {}
+        y = {}
+        x.ref = y
+        y.ref = x
+        expect(-> JSON.stringify x).toThrow "Converting circular structure to JSON"
+
     describe "newUuid", ->
       it "will generate proper v4 UUIDs", ->
         expect(UUID_REGEXP.test sansa.newUuid()).toBe true
 
-    describe "SANSA_ID", ->
-      it "is equal to '«sansa'", ->
-        expect(sansa.SANSA_ID).toBe '«sansa'
-
     describe "serialization", ->
-        LANGLE = sansa.LANGLE 
-        SANSA_ID = sansa.SANSA_ID
+        RANGLE = sansa.RANGLE
         TYPE_TAG = sansa.TYPE_TAG
+        
         it "will generate a UUID for unidentified objects", ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(UUID_REGEXP.test uuid).toBe true
@@ -35,18 +40,19 @@ describe 'sansa', ->
         it "will not use the 'uuid' property as the identify of objects", ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(UUID_REGEXP.test uuid).toBe true
-              expect(uuid).not.toEqual "61d8375b-54fa-45fb-9f1c-c745370b268f"
+              expect(uuid).toEqual "61d8375b-54fa-45fb-9f1c-c745370b268f"
             sansa.registerOutput sansaOutput
             sansa.save { uuid: "61d8375b-54fa-45fb-9f1c-c745370b268f" }
 
-        it "will tag identified objects with a SANSA_ID", ->
+        it "will tag identified objects with a uuid property", ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(UUID_REGEXP.test uuid).toBe true
               expect(uuid).not.toEqual "602fb225-9b70-4734-9cbf-52a007b80f56"
-              expect(sObj[SANSA_ID]).toBeDefined()
-              expect(UUID_REGEXP.test sObj[SANSA_ID]).toBe true
+              expect(sObj.uuid).toBeDefined()
+              expect(UUID_REGEXP.test sObj.uuid).toBe true
+              expect(sObj.uuid).not.toEqual "602fb225-9b70-4734-9cbf-52a007b80f56"
             sansa.registerOutput sansaOutput
-            sansa.save { uuid: "602fb225-9b70-4734-9cbf-52a007b80f56" }
+            sansa.save { anotherUuid: "602fb225-9b70-4734-9cbf-52a007b80f56" }
 
         it "will generate a new object for serialization", ->
             testObj =
@@ -57,17 +63,17 @@ describe 'sansa', ->
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
-        it "will copy the SANSA_ID property to the serialization object", ->
+        it "will copy the uuid property to the serialization object", ->
             testObj =
               uuid: "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
             sansaOutput = (uuid, json, dObj, sObj) ->
-              expect(sObj[SANSA_ID]).toBeDefined()
-              expect(UUID_REGEXP.test sObj[SANSA_ID]).toBe true
-              expect(sObj[SANSA_ID]).not.toEqual "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
-              expect(dObj[SANSA_ID]).toBeDefined()
-              expect(UUID_REGEXP.test dObj[SANSA_ID]).toBe true
-              expect(dObj[SANSA_ID]).not.toEqual "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
-              expect(dObj[SANSA_ID]).toEqual sObj[SANSA_ID]
+              expect(sObj.uuid).toBeDefined()
+              expect(UUID_REGEXP.test sObj.uuid).toBe true
+              expect(sObj.uuid).toEqual "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
+              expect(dObj.uuid).toBeDefined()
+              expect(UUID_REGEXP.test dObj.uuid).toBe true
+              expect(dObj.uuid).toEqual "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
+              expect(dObj.uuid).toEqual sObj.uuid
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
@@ -130,9 +136,8 @@ describe 'sansa', ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(dObj.uuid).toBeDefined()
               expect(dObj.uuid).toEqual "71746867-4359-4910-b126-72af066eef23"
-              expect(dObj.birthdate).not.toBeDefined()
-              expect(dObj[LANGLE+"birthdate"]).toBeDefined()
-              expect(dObj[LANGLE+"birthdate"]).toEqual 1372219379607
+              expect(dObj.birthdate).toBeDefined()
+              expect(dObj.birthdate).toEqual RANGLE+"1372219379607"
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
@@ -143,16 +148,14 @@ describe 'sansa', ->
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(dObj.uuid).toBeDefined()
               expect(dObj.uuid).toEqual "847a985a-c560-4b4e-9e8e-0405a750851b"
-              expect(dObj.birthdate).not.toBeDefined()
-              expect(dObj[LANGLE+"birthdate"]).toBeDefined()
-              expect(dObj[LANGLE+"birthdate"]).toEqual 1372220411502
+              expect(dObj.birthdate).toBeDefined()
+              expect(dObj.birthdate).toEqual RANGLE+"1372220411502"
               expect(json).toBeDefined()
               checkObj = JSON.parse json
               expect(checkObj.uuid).toBeDefined()
               expect(checkObj.uuid).toEqual "847a985a-c560-4b4e-9e8e-0405a750851b"
-              expect(checkObj.birthdate).not.toBeDefined()
-              expect(checkObj[LANGLE+"birthdate"]).toBeDefined()
-              expect(checkObj[LANGLE+"birthdate"]).toEqual 1372220411502
+              expect(checkObj.birthdate).toBeDefined()
+              expect(checkObj.birthdate).toEqual RANGLE+"1372220411502"
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
@@ -200,10 +203,10 @@ describe 'sansa', ->
             expect(dObj.uuid).toEqual "bab84f42-6970-432b-90df-d68474aac418"
             expect(dObj.myArray).toBeDefined()
             expect(dObj.myArray.length).toEqual 4
-            expect(dObj.myArray[0]).toEqual { '«time': 1372220411502 }
-            expect(dObj.myArray[1]).toEqual { '«time': 1372221411502 }
-            expect(dObj.myArray[2]).toEqual { '«time': 1372222411502 }
-            expect(dObj.myArray[3]).toEqual { '«time': 1372223411502 }
+            expect(dObj.myArray[0]).toEqual RANGLE+"1372220411502"
+            expect(dObj.myArray[1]).toEqual RANGLE+"1372221411502"
+            expect(dObj.myArray[2]).toEqual RANGLE+"1372222411502"
+            expect(dObj.myArray[3]).toEqual RANGLE+"1372223411502"
           sansa.registerOutput sansaOutput
           sansa.save testObj
 
@@ -250,6 +253,46 @@ describe 'sansa', ->
             expect(dObj.i).toEqual 2
           sansa.registerOutput sansaOutput
           sansa.save testObj
+
+        it "will not save 'Object' as the constructor name", ->
+          testObj = {}
+          testObj.uuid = "1290b1c0-eb20-4667-9550-ebfb410647f0"
+          sansaOutput = (uuid, json, dObj, sObj) ->
+            expect(testObj.constructor.name).toBeDefined()
+            expect(testObj.constructor.name).toEqual 'Object'
+            expect(dObj.uuid).toBeDefined()
+            expect(dObj.uuid).toEqual "1290b1c0-eb20-4667-9550-ebfb410647f0"
+            expect(dObj[TYPE_TAG]).not.toBeDefined()
+          sansa.registerOutput sansaOutput
+          sansa.save testObj
+
+#        it "will handle references to objects", ->
+#            expect(false).toBe true
+#
+#        it "will handle arrays with object", ->
+#            expect(false).toBe true
+#
+#        it "will handle circular references between objects", ->
+#            expect(false).toBe true
+#
+#        it "will handle arrays with circular references between objects", ->
+#            expect(false).toBe true
+#
+#        it "will handle arrays that contain arrays", ->
+#            expect(false).toBe true
+#
+#        it "will handle arrays that contain objects that contain arrays", ->
+#            expect(false).toBe true
+#
+#        it "will handle objects that contain objects that contain arrays", ->
+#            expect(false).toBe true
+#
+#        it "will handle complex object graphs with diverse types and structures", ->
+#            expect(false).toBe true
+#
+#    describe "deserialization", ->
+#        it "will use registered constructors to recreate objects", ->
+#            expect(false).toBe true
 
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee
