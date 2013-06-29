@@ -20,7 +20,7 @@ exports.registerOutput = (output) ->
   outputs.addListener 'save', output
 
 exports.save = (obj) ->
-  saveContext = {}
+  saveContext = { arrayList: [] }
   saveObject saveContext, obj
   
 saveObject = (context, obj) ->
@@ -49,7 +49,13 @@ dehydrate = (context, obj) ->
         if obj[key] instanceof Date
           dObj[key] = RANGLE + obj[key].getTime().toString()
         else if obj[key] instanceof Array
+          for checkArray in context.arrayList
+            if checkArray is obj[key]
+              throw "Serializing circular arrays with Sansa"
+          context.arrayList.push obj[key]
           dObj[key] = dehydrate context, obj[key]
+          if context.arrayList.pop() isnt obj[key]
+            throw "Sansa detected corrupted save context"
         else
           uuid = identify obj[key]
           if not context[uuid]?

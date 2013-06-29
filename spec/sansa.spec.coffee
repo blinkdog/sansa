@@ -376,9 +376,26 @@ describe 'sansa', ->
             expect(ySave.sObj.ref.uuid).toBeDefined()
             expect(ySave.dObj.ref).toBe RANGLE + ySave.sObj.ref.uuid
 
-#        it "will handle arrays with self references", ->
-#            expect(false).toBe true
-#
+          it "will throw when handling arrays with self references", ->
+            x = { gnu: [] }
+            x.gnu[0] = x.gnu
+            x.gnu[1] = 'Not'
+            x.gnu[2] = 'Unix'
+            expect(-> sansa.save x).toThrow "Serializing circular arrays with Sansa"
+
+          it "will throw when handling arrays with circular references", ->
+            x = { gnu: [] }
+            y = { linux: [] }
+            x.gnu[0] = y.linux
+            y.linux[0] = x.gnu
+            expect(-> sansa.save x).toThrow "Serializing circular arrays with Sansa"
+
+          it "will not throw when two objects reference the same array", ->
+            pets = [ 'cat', 'dog', 'ferret', 'rabbit' ]
+            friend = { myFriendsPets: pets }
+            me = { myPets: pets, myFriend: friend }
+            expect(-> sansa.save me).not.toThrow "Serializing circular arrays with Sansa"
+
 #        it "will handle arrays with circular references between objects", ->
 #            expect(false).toBe true
 #
