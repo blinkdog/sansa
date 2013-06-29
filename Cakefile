@@ -33,8 +33,8 @@ compile = (callback) ->
 
 test = (callback) ->
   exec 'jasmine-node --verbose --noStack --coffee spec/', (err, stdout, stderr) =>
+    console.log stdout + stderr
     if stdout.indexOf("Failures") >= 0
-      console.log stdout + stderr
       throw "Failed: Jasmine Tests" 
     callback?()
 

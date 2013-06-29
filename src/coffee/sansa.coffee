@@ -2,15 +2,16 @@
 # Copyright 2013 Patrick Meade. All rights reserved.
 #----------------------------------------------------------------------
 
-UUID_REGEXP = /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/
-
 crypto = require 'crypto'
 events = require 'events'
 
 outputs = new events.EventEmitter()
 
 exports.RANGLE = RANGLE = '»'
+exports.TIME_TAG_RE = /^»[0-9]{13}$/
 exports.TYPE_TAG = TYPE_TAG = RANGLE + 'type'
+exports.UUID_RE = UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+exports.UUID_TAG_RE = /^»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
 exports.clear = ->
   outputs.removeAllListeners()
@@ -29,7 +30,7 @@ saveObject = (context, obj) ->
   outputs.emit 'save', uuid, JSON.stringify(dObj), dObj, obj
 
 identify = (obj) ->
-  return obj.uuid if obj.uuid? and UUID_REGEXP.test obj.uuid
+  return obj.uuid if obj.uuid? and UUID_RE.test obj.uuid
   obj.uuid = newUuid()
 
 dehydrate = (context, obj) ->
@@ -52,7 +53,7 @@ dehydrate = (context, obj) ->
         else
           uuid = identify obj[key]
           if not context[uuid]?
-            saveObject obj
+            saveObject context, obj[key]
           dObj[key] = RANGLE + uuid
   return dObj
 

@@ -2,11 +2,11 @@
 # Copyright 2013 Patrick Meade. All rights reserved.
 #----------------------------------------------------------------------
 
-UUID_REGEXP = /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/
-UUID_TAG_RE = /»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/
-
 describe 'sansa', ->
     sansa = require '../lib/sansa'
+    UUID_RE = sansa.UUID_RE
+    TIME_TAG_RE = sansa.TIME_TAG_RE
+    UUID_TAG_RE = sansa.UUID_TAG_RE
     
     beforeEach ->
         sansa.clear()
@@ -25,7 +25,7 @@ describe 'sansa', ->
 
     describe "newUuid", ->
       it "will generate proper v4 UUIDs", ->
-        expect(UUID_REGEXP.test sansa.newUuid()).toBe true
+        expect(UUID_RE.test sansa.newUuid()).toBe true
 
     describe "serialization", ->
         RANGLE = sansa.RANGLE
@@ -33,23 +33,23 @@ describe 'sansa', ->
         
         it "will generate a UUID for unidentified objects", ->
             sansaOutput = (uuid, json, dObj, sObj) ->
-              expect(UUID_REGEXP.test uuid).toBe true
+              expect(UUID_RE.test uuid).toBe true
             sansa.registerOutput sansaOutput
             sansa.save {}
 
-        it "will not use the 'uuid' property as the identify of objects", ->
+        it "will use an existing 'uuid' property as the identify of objects", ->
             sansaOutput = (uuid, json, dObj, sObj) ->
-              expect(UUID_REGEXP.test uuid).toBe true
+              expect(UUID_RE.test uuid).toBe true
               expect(uuid).toEqual "61d8375b-54fa-45fb-9f1c-c745370b268f"
             sansa.registerOutput sansaOutput
             sansa.save { uuid: "61d8375b-54fa-45fb-9f1c-c745370b268f" }
 
         it "will tag identified objects with a uuid property", ->
             sansaOutput = (uuid, json, dObj, sObj) ->
-              expect(UUID_REGEXP.test uuid).toBe true
+              expect(UUID_RE.test uuid).toBe true
               expect(uuid).not.toEqual "602fb225-9b70-4734-9cbf-52a007b80f56"
               expect(sObj.uuid).toBeDefined()
-              expect(UUID_REGEXP.test sObj.uuid).toBe true
+              expect(UUID_RE.test sObj.uuid).toBe true
               expect(sObj.uuid).not.toEqual "602fb225-9b70-4734-9cbf-52a007b80f56"
             sansa.registerOutput sansaOutput
             sansa.save { anotherUuid: "602fb225-9b70-4734-9cbf-52a007b80f56" }
@@ -68,10 +68,10 @@ describe 'sansa', ->
               uuid: "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
             sansaOutput = (uuid, json, dObj, sObj) ->
               expect(sObj.uuid).toBeDefined()
-              expect(UUID_REGEXP.test sObj.uuid).toBe true
+              expect(UUID_RE.test sObj.uuid).toBe true
               expect(sObj.uuid).toEqual "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
               expect(dObj.uuid).toBeDefined()
-              expect(UUID_REGEXP.test dObj.uuid).toBe true
+              expect(UUID_RE.test dObj.uuid).toBe true
               expect(dObj.uuid).toEqual "2285cfe8-69df-4ca7-9b45-5394b5a2b269"
               expect(dObj.uuid).toEqual sObj.uuid
             sansa.registerOutput sansaOutput
@@ -138,6 +138,7 @@ describe 'sansa', ->
               expect(dObj.uuid).toEqual "71746867-4359-4910-b126-72af066eef23"
               expect(dObj.birthdate).toBeDefined()
               expect(dObj.birthdate).toEqual RANGLE+"1372219379607"
+              expect(TIME_TAG_RE.test dObj.birthdate).toBe true
             sansa.registerOutput sansaOutput
             sansa.save testObj
 
@@ -236,6 +237,8 @@ describe 'sansa', ->
             expect(dObj[TYPE_TAG]).toBeDefined()
             expect(dObj[TYPE_TAG]).toEqual 'ComplexNumber'
             expect(sObj[TYPE_TAG]).not.toBeDefined()
+            expect(dObj.r).toEqual 3
+            expect(dObj.i).toEqual 2
           sansa.registerOutput sansaOutput
           sansa.save testObj
 
@@ -266,13 +269,114 @@ describe 'sansa', ->
           sansa.registerOutput sansaOutput
           sansa.save testObj
 
-#        it "will handle references to objects", ->
-#            expect(false).toBe true
-#
-#        it "will handle arrays with object", ->
-#            expect(false).toBe true
-#
-#        it "will handle circular references between objects", ->
+        describe "object-graph serialization", ->
+          outputSaver = ->
+            jsonStore = {}
+            # See: http://www.lettersofnote.com/2009/10/savin-it.html
+            savinIt = (uuid, json, dObj, sObj) ->
+              jsonStore[uuid] = { "json":json, "dObj":dObj, "sObj":sObj }
+            savinIt.get = (uuid) ->
+              return jsonStore[uuid]
+            savinIt.getAll = ->
+              return jsonStore
+            return savinIt
+            
+          it "will handle references to objects", ->
+            pets =
+              cats: 3
+              dogs: 1
+            alice =
+              name: 'Alice'
+              pets: pets
+            sansaOutput = jasmine.createSpy 'sansaOutput'
+            sansa.registerOutput sansaOutput
+            sansa.save alice
+            expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), alice
+            expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), pets
+            
+          it "will handle arrays with objects", ->
+            bob =
+              type: 'Cat'
+              name: 'Bob'
+              sex: 'Male'
+            carol =
+              type: 'Dog'
+              name: 'Carol'
+              sex: 'Female'
+            dave =
+              type: 'Rabbit'
+              name: 'Dave'
+              sex: 'Male'
+            gertrude =
+              type: 'Ferret'
+              name: 'Gertrude'
+              sex: 'Female'
+            alice =
+              name: 'Alice'
+              pets: [ bob, carol, dave, gertrude ]
+            sansaOutput = jasmine.createSpy 'sansaOutput'
+            sansa.registerOutput sansaOutput
+            sansa.save alice
+            expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), alice
+            expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), bob
+            expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), carol
+            expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), dave
+            expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), gertrude
+
+          it "will handle self references in objects", ->
+            alice =
+              name: 'Alice'
+              uuid: '9f6449db-2f48-40ff-8f6f-5be629a3ad7e'
+            alice.ref = alice
+            sansaOutput = outputSaver()
+            sansa.registerOutput sansaOutput
+            sansa.save alice
+            aliceSave = sansaOutput.get '9f6449db-2f48-40ff-8f6f-5be629a3ad7e'
+            expect(aliceSave).toBeDefined()
+            expect(aliceSave.json).toBeDefined()
+            expect(aliceSave.dObj).toBeDefined()
+            expect(aliceSave.sObj).toBeDefined()
+            expect(aliceSave.sObj).toBe alice
+            expect(aliceSave.sObj.name).toBe 'Alice'
+            expect(aliceSave.sObj.uuid).toBe '9f6449db-2f48-40ff-8f6f-5be629a3ad7e'
+            expect(aliceSave.sObj.ref).not.toBe RANGLE+'9f6449db-2f48-40ff-8f6f-5be629a3ad7e'
+            expect(aliceSave.dObj).not.toBe alice
+            expect(aliceSave.dObj.name).toBe 'Alice'
+            expect(aliceSave.dObj.uuid).toBe '9f6449db-2f48-40ff-8f6f-5be629a3ad7e'
+            expect(aliceSave.dObj.ref).toBe RANGLE+'9f6449db-2f48-40ff-8f6f-5be629a3ad7e'
+
+          it "will handle circular references between objects", ->
+            x = { uuid: '682c0f92-17e6-4f80-8da4-c07a79e0c5ba' }
+            y = {}
+            x.ref = y
+            y.ref = x
+            sansaOutput = outputSaver()
+            sansa.registerOutput sansaOutput
+            sansa.save x
+            
+            xSave = sansaOutput.get '682c0f92-17e6-4f80-8da4-c07a79e0c5ba'
+            expect(xSave).toBeDefined()
+            expect(xSave.json).toBeDefined()
+            expect(xSave.dObj).toBeDefined()
+            expect(xSave.sObj).toBeDefined()
+            expect(xSave.sObj).toBe x
+            expect(xSave.sObj.ref).toBe y
+            expect(xSave.sObj.ref.ref).toBe x
+            expect(xSave.sObj.ref.uuid).toBeDefined()
+            expect(xSave.dObj.ref).toBe RANGLE + xSave.sObj.ref.uuid
+
+            ySave = sansaOutput.get xSave.sObj.ref.uuid
+            expect(ySave).toBeDefined()
+            expect(ySave.json).toBeDefined()
+            expect(ySave.dObj).toBeDefined()
+            expect(ySave.sObj).toBeDefined()
+            expect(ySave.sObj).toBe y
+            expect(ySave.sObj.ref).toBe x
+            expect(ySave.sObj.ref.ref).toBe y
+            expect(ySave.sObj.ref.uuid).toBeDefined()
+            expect(ySave.dObj.ref).toBe RANGLE + ySave.sObj.ref.uuid
+
+#        it "will handle arrays with self references", ->
 #            expect(false).toBe true
 #
 #        it "will handle arrays with circular references between objects", ->

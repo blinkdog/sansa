@@ -1,6 +1,6 @@
 {
     "name": "sansa",
-    "version": "0.0.14",
+    "version": "0.0.15",
     "dependencies": {
         "coffee-script": "1.6.x"
     },
