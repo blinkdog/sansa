@@ -35,11 +35,13 @@ identify = (obj) ->
 
 dehydrate = (context, obj) ->
   # create an appropriate destination object
-  dObj = [] if obj instanceof Array
-  dObj ?= {}
-  # save the type of the source object
-  type = obj.constructor.name
-  dObj[TYPE_TAG] = type if type isnt 'Object' and type.length > 0
+  if obj instanceof Array
+    dObj = []
+  else
+    dObj = {}
+    # save the type of the source object
+    type = obj.constructor.name
+    dObj[TYPE_TAG] = type if type isnt 'Object' and type.length > 0
   # dehydrate the source object into the destination object
   for key of obj
     switch typeof obj[key]

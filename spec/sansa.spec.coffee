@@ -269,12 +269,25 @@ describe 'sansa', ->
           sansa.registerOutput sansaOutput
           sansa.save testObj
 
+        it "will not save 'Array' as the constructor name", ->
+          testObj = [ 'abc', 'def', 'ghi' ]
+          testObj.uuid = "88d4024f-bec5-4a21-b6e3-1742b0f48b1c"
+          sansaOutput = (uuid, json, dObj, sObj) ->
+            expect(testObj.constructor.name).toBeDefined()
+            expect(testObj.constructor.name).toEqual 'Array'
+            expect(dObj.uuid).toBeDefined()
+            expect(dObj.uuid).toEqual "88d4024f-bec5-4a21-b6e3-1742b0f48b1c"
+            expect(dObj[TYPE_TAG]).not.toBeDefined()
+          sansa.registerOutput sansaOutput
+          sansa.save testObj
+
         describe "object-graph serialization", ->
           outputSaver = ->
             jsonStore = {}
             # See: http://www.lettersofnote.com/2009/10/savin-it.html
             savinIt = (uuid, json, dObj, sObj) ->
               jsonStore[uuid] = { "json":json, "dObj":dObj, "sObj":sObj }
+              console.log uuid, json, dObj, sObj
             savinIt.get = (uuid) ->
               return jsonStore[uuid]
             savinIt.getAll = ->
@@ -396,21 +409,45 @@ describe 'sansa', ->
             me = { myPets: pets, myFriend: friend }
             expect(-> sansa.save me).not.toThrow "Serializing circular arrays with Sansa"
 
-#        it "will handle arrays with circular references between objects", ->
-#            expect(false).toBe true
-#
-#        it "will handle arrays that contain arrays", ->
-#            expect(false).toBe true
-#
-#        it "will handle arrays that contain objects that contain arrays", ->
-#            expect(false).toBe true
-#
-#        it "will handle objects that contain objects that contain arrays", ->
-#            expect(false).toBe true
-#
-#        it "will handle complex object graphs with diverse types and structures", ->
-#            expect(false).toBe true
-#
+          it "will handle arrays with circular references between objects", ->
+            x = {}
+            y = {}
+            z = {}
+            x.y = y
+            y.z = z
+            z.x = x
+            a = [ x, y, z ]
+            b = [ y, z, x ]
+            c = [ z, x, y ]
+            expect(-> sansa.save c).not.toThrow()
+
+          it "will handle arrays that contain arrays", ->
+            x = {}
+            y = {}
+            z = {}
+            x.y = y
+            y.z = z
+            z.x = x
+            a = [ x, y, z ]
+            b = [ a, y, z, x ]
+            c = [ b, z, x, y ]
+            expect(-> sansa.save c).not.toThrow()
+
+          it "will handle arrays that contain objects that contain arrays", ->
+            x = {}
+            y = {}
+            z = {}
+            x.y = y
+            y.z = z
+            z.x = x
+            a = [ x, y, z ]
+            b = [ a, y, z, x ]
+            c = [ b, z, x, y ]
+            x.c = c
+            y.b = b
+            z.a = a
+            expect(-> sansa.save x).not.toThrow()
+
 #    describe "deserialization", ->
 #        it "will use registered constructors to recreate objects", ->
 #            expect(false).toBe true
