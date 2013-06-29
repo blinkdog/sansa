@@ -5,7 +5,10 @@
 crypto = require 'crypto'
 events = require 'events'
 
+inputs = []
 outputs = new events.EventEmitter()
+
+#----------------------------------------------------------------------
 
 exports.RANGLE = RANGLE = '»'
 exports.TIME_TAG_RE = /^»[0-9]{13}$/
@@ -14,7 +17,14 @@ exports.UUID_RE = UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f
 exports.UUID_TAG_RE = /^»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
 exports.clear = ->
+  inputs = []
   outputs.removeAllListeners()
+
+exports.load = (uuid) ->
+  loadObject uuid
+
+exports.registerInput = (input) ->
+  inputs.push input
 
 exports.registerOutput = (output) ->
   outputs.addListener 'save', output
@@ -22,7 +32,9 @@ exports.registerOutput = (output) ->
 exports.save = (obj) ->
   saveContext = { arrayList: [] }
   saveObject saveContext, obj
-  
+
+#----------------------------------------------------------------------------
+
 saveObject = (context, obj) ->
   uuid = identify obj
   context[uuid] = obj
@@ -64,6 +76,20 @@ dehydrate = (context, obj) ->
             saveObject context, obj[key]
           dObj[key] = RANGLE + uuid
   return dObj
+
+#----------------------------------------------------------------------
+
+loadObject = (uuid) ->
+  json = loadJson uuid
+  return null if not json?
+
+loadJson = (uuid) ->
+  for input in inputs
+    json = input uuid
+    return json if json?
+  return null
+
+#----------------------------------------------------------------------
 
 # See: http://stackoverflow.com/a/2117523
 exports.newUuid = newUuid = ->

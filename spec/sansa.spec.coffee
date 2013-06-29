@@ -448,9 +448,32 @@ describe 'sansa', ->
             z.a = a
             expect(-> sansa.save x).not.toThrow()
 
-#    describe "deserialization", ->
-#        it "will use registered constructors to recreate objects", ->
-#            expect(false).toBe true
+    describe "deserialization", ->
+      RANGLE = sansa.RANGLE
+      TYPE_TAG = sansa.TYPE_TAG
+        
+      it "will ask registered inputs for JSON", ->
+        sansaInput = jasmine.createSpy 'sansaInput'
+        sansa.registerInput sansaInput
+        x = sansa.load 'e5a48668-8482-492f-8846-16ef63de9a21'
+        expect(sansaInput).toHaveBeenCalledWith 'e5a48668-8482-492f-8846-16ef63de9a21'
+
+      it "will respect the order of input registration", ->
+        input1 = jasmine.createSpy 'input1'
+        holder =
+          input2: (uuid) -> return "{}"
+        spyOn(holder, "input2").andCallThrough()
+        input3 = jasmine.createSpy 'input3'
+        sansa.registerInput input1
+        sansa.registerInput holder.input2
+        sansa.registerInput input3
+        x = sansa.load '4750fdaf-d3f5-46d3-a955-4f363547bbbd'
+        expect(input1).toHaveBeenCalledWith '4750fdaf-d3f5-46d3-a955-4f363547bbbd'
+        expect(holder.input2).toHaveBeenCalledWith '4750fdaf-d3f5-46d3-a955-4f363547bbbd'
+        expect(input3).not.toHaveBeenCalled()
+
+#      it "will use registered constructors to recreate objects", ->
+#        expect(false).toBe true
 
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee
