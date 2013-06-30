@@ -539,14 +539,27 @@ describe 'sansa', ->
           return new ComplexNumber()
         sansa.registerConstructorProxy 'ComplexNumber', proxyOne
         sansa.registerInput (uuid) ->
-          return '{"»type":"ComplexNumber","r":3,"i":2}' if uuid is "1ca74e5b-a7c2-4a0f-aa4f-e350aac646ff"
+          return '{"»type":"ComplexNumber","r":3,"i":2}' if uuid is "d8b552df-a00c-433a-b416-5223eaf9cab9"
           return null
-        testObj = sansa.load '1ca74e5b-a7c2-4a0f-aa4f-e350aac646ff'
-        expect(testObj.uuid).toBe '1ca74e5b-a7c2-4a0f-aa4f-e350aac646ff'
+        testObj = sansa.load 'd8b552df-a00c-433a-b416-5223eaf9cab9'
+        expect(testObj.uuid).toBe 'd8b552df-a00c-433a-b416-5223eaf9cab9'
         expect(testObj.r).toEqual 3
         expect(testObj.i).toEqual 2
         expect(testObj[sansa.TYPE_TAG]).not.toBeDefined()
         expect(testObj.constructor.name).toEqual 'ComplexNumber'
+
+      describe "object-graph deserialization", ->
+        it "will restore objects by reference", ->
+          sansa.registerInput (uuid) ->
+            return '{"dogs":1,"cats":2}' if uuid is "b8945f37-6992-4bcc-a2e1-c15d7afc8087"
+            return '{"name":"Alice","pets":"»b8945f37-6992-4bcc-a2e1-c15d7afc8087"}' if uuid is "8049c1de-1a4f-412d-97df-72695783eb68"
+            return null
+          testObj = sansa.load '8049c1de-1a4f-412d-97df-72695783eb68'
+          expect(testObj.uuid).toBe '8049c1de-1a4f-412d-97df-72695783eb68'
+          expect(testObj.name).toEqual "Alice"
+          expect(testObj.pets).toBeDefined()
+          expect(testObj.pets.dogs).toEqual 1
+          expect(testObj.pets.cats).toEqual 2
 
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee

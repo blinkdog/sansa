@@ -133,7 +133,7 @@ rehydrate = (rObj, dObj, uuid, context) ->
           throw "Sansa detected constructor error" if rObj.constructor.name isnt dObj[key]
         else
           if UUID_TAG_RE.test dObj[key]
-            throw 'Unsupported Operation: Object references'
+            rObj[key] = loadObject context, dObj[key].substring(1)
           else if TIME_TAG_RE.test dObj[key]
             rObj[key] = new Date(parseInt(dObj[key].substring(1), 10))
           else
