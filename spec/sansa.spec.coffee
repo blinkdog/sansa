@@ -287,7 +287,6 @@ describe 'sansa', ->
             # See: http://www.lettersofnote.com/2009/10/savin-it.html
             savinIt = (uuid, json, dObj, sObj) ->
               jsonStore[uuid] = { "json":json, "dObj":dObj, "sObj":sObj }
-              console.log uuid, json, dObj, sObj
             savinIt.get = (uuid) ->
               return jsonStore[uuid]
             savinIt.getAll = ->
@@ -560,6 +559,69 @@ describe 'sansa', ->
           expect(testObj.pets).toBeDefined()
           expect(testObj.pets.dogs).toEqual 1
           expect(testObj.pets.cats).toEqual 2
+          
+        it "will restore objects with self-reference", ->
+          sansa.registerInput (uuid) ->
+            return '{"name":"Alice","self":"»89475235-5b57-470d-9f2c-f1dead2decbd"}' if uuid is "89475235-5b57-470d-9f2c-f1dead2decbd"
+            return null
+          testObj = sansa.load '89475235-5b57-470d-9f2c-f1dead2decbd'
+          expect(testObj.uuid).toBe '89475235-5b57-470d-9f2c-f1dead2decbd'
+          expect(testObj.name).toEqual "Alice"
+          expect(testObj.self).toBeDefined()
+          expect(testObj.self).toBe testObj
+
+        it "will restore objects with circular reference", ->
+          sansa.registerInput (uuid) ->
+            return '{"name":"Alice","spouse":"»9034dda3-eaaa-47ea-b87f-b6d276646f50"}' if uuid is "08dc491a-6be5-4e7b-8c1f-445fe7c48088"
+            return '{"name":"Bob","spouse":"»08dc491a-6be5-4e7b-8c1f-445fe7c48088"}' if uuid is "9034dda3-eaaa-47ea-b87f-b6d276646f50"
+            return null
+          testObj = sansa.load '08dc491a-6be5-4e7b-8c1f-445fe7c48088'
+          expect(testObj.uuid).toBe '08dc491a-6be5-4e7b-8c1f-445fe7c48088'
+          expect(testObj.name).toEqual "Alice"
+          expect(testObj.spouse).toBeDefined()
+          expect(testObj.spouse.uuid).toBe '9034dda3-eaaa-47ea-b87f-b6d276646f50'
+          expect(testObj.spouse.name).toEqual "Bob"
+          expect(testObj.spouse.spouse).toBeDefined()
+          expect(testObj.spouse.spouse).toEqual testObj
+
+        it "will restore complex object graphs", ->
+          sansa.registerInput (uuid) ->
+            return '{"x":"»3fcfbf82-b182-4252-8834-a53fa636e604","a":["»3fcfbf82-b182-4252-8834-a53fa636e604","»12b4c306-376b-409d-9603-f58fea92271a","»33f70b3f-5944-4c9e-9582-22bd326012e2"],"uuid":"33f70b3f-5944-4c9e-9582-22bd326012e2"}' if uuid is "33f70b3f-5944-4c9e-9582-22bd326012e2"
+            return '{"z":"»33f70b3f-5944-4c9e-9582-22bd326012e2","b":[["»3fcfbf82-b182-4252-8834-a53fa636e604","»12b4c306-376b-409d-9603-f58fea92271a","»33f70b3f-5944-4c9e-9582-22bd326012e2"],"»12b4c306-376b-409d-9603-f58fea92271a","»33f70b3f-5944-4c9e-9582-22bd326012e2","»3fcfbf82-b182-4252-8834-a53fa636e604"],"uuid":"12b4c306-376b-409d-9603-f58fea92271a"}' if uuid is "12b4c306-376b-409d-9603-f58fea92271a"
+            return '{"y":"»12b4c306-376b-409d-9603-f58fea92271a","c":[[["»3fcfbf82-b182-4252-8834-a53fa636e604","»12b4c306-376b-409d-9603-f58fea92271a","»33f70b3f-5944-4c9e-9582-22bd326012e2"],"»12b4c306-376b-409d-9603-f58fea92271a","»33f70b3f-5944-4c9e-9582-22bd326012e2","»3fcfbf82-b182-4252-8834-a53fa636e604"],"»33f70b3f-5944-4c9e-9582-22bd326012e2","»3fcfbf82-b182-4252-8834-a53fa636e604","»12b4c306-376b-409d-9603-f58fea92271a"],"uuid":"3fcfbf82-b182-4252-8834-a53fa636e604"}' if uuid is "3fcfbf82-b182-4252-8834-a53fa636e604"
+            return null
+          testObj = sansa.load '3fcfbf82-b182-4252-8834-a53fa636e604'
+          expect(testObj).toBeDefined()
+          x = testObj
+          expect(x.y).toBeDefined()
+          y = x.y
+          expect(y.z).toBeDefined()
+          z = y.z
+          expect(z.x).toBeDefined()
+          expect(z.x).toBe x
+          expect(z.a).toBeDefined()
+          a = z.a
+          expect(a[0]).toBe x
+          expect(a[1]).toBe y
+          expect(a[2]).toBe z
+          expect(y.b).toBeDefined()
+          b = y.b
+          expect(b[1]).toBe y
+          expect(b[2]).toBe z
+          expect(b[3]).toBe x
+          expect(x.c).toBeDefined()
+          c = x.c
+          expect(c[1]).toBe z
+          expect(c[2]).toBe x
+          expect(c[3]).toBe y
+          expect(b[0] instanceof Array).toBe true
+          expect(b[0][0]).toBe a[0]
+          expect(b[0][1]).toBe a[1]
+          expect(b[0][2]).toBe a[2]
+          expect(c[0] instanceof Array).toBe true
+          expect(c[0][0][0]).toBe b[0][0]
+          expect(c[0][0][1]).toBe b[0][1]
+          expect(c[0][0][2]).toBe b[0][2]
 
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee

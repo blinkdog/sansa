@@ -141,7 +141,7 @@ rehydrate = (rObj, dObj, uuid, context) ->
       when "object"
         if dObj[key] instanceof Array
           rObj[key] = []
-          rehydrate rObj[key], dObj[key]
+          rehydrate rObj[key], dObj[key], uuid, context
         else
           throw 'Sansa detected corrupt JSON input'
 
