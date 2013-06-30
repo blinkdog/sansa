@@ -5,6 +5,7 @@
 crypto = require 'crypto'
 events = require 'events'
 
+constructors = {}
 inputs = []
 outputs = new events.EventEmitter()
 
@@ -13,16 +14,25 @@ outputs = new events.EventEmitter()
 exports.RANGLE      = RANGLE      = '»'
 exports.TIME_TAG_RE = TIME_TAG_RE = /^»[0-9]{13}$/
 exports.TYPE_TAG    = TYPE_TAG    = RANGLE + 'type'
+exports.TYPE_TAG_RE = TYPE_TAG_RE = /^»type$/
 exports.UUID_RE     = UUID_RE     = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 exports.UUID_TAG_RE = UUID_TAG_RE = /^»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
 exports.clear = ->
+  constructors = {}
   inputs = []
   outputs.removeAllListeners()
 
 exports.load = (uuid) ->
   loadContext = {}
   loadObject loadContext, uuid
+
+exports.registerConstructor = (name, con) ->
+  constructors[name] = con
+
+exports.registerConstructorProxy = (name, con) ->
+  constructors[name] = con
+  constructors[name].__proxy = true
 
 exports.registerInput = (input) ->
   inputs.push input
@@ -93,7 +103,14 @@ loadObject = (context, uuid) ->
   if dObj instanceof Array
     context[uuid] = []
   else
-    context[uuid] = {}
+    if dObj[TYPE_TAG]?
+      rObjCons = constructors[dObj[TYPE_TAG]]
+      if rObjCons.__proxy
+        context[uuid] = rObjCons(dObj, json, uuid, context)
+      else
+        context[uuid] = new rObjCons()
+    else
+      context[uuid] = {}
   # now let's rehydrate the provided JSON into the canonical object
   rehydrate context[uuid], dObj, uuid, context
   # return the new canonical object to the caller
@@ -112,18 +129,21 @@ rehydrate = (rObj, dObj, uuid, context) ->
       when "boolean", "number"
         rObj[key] = dObj[key]
       when "string"
-        if UUID_TAG_RE.test dObj[key]
-          throw 'Unsupported Operation: Object references'
-        else if TIME_TAG_RE.test dObj[key]
-          rObj[key] = new Date(parseInt(dObj[key].substring(1), 10))
+        if TYPE_TAG_RE.test key
+          throw "Sansa detected constructor error" if rObj.constructor.name isnt dObj[key]
         else
-          rObj[key] = dObj[key]
+          if UUID_TAG_RE.test dObj[key]
+            throw 'Unsupported Operation: Object references'
+          else if TIME_TAG_RE.test dObj[key]
+            rObj[key] = new Date(parseInt(dObj[key].substring(1), 10))
+          else
+            rObj[key] = dObj[key]
       when "object"
         if dObj[key] instanceof Array
           rObj[key] = []
           rehydrate rObj[key], dObj[key]
         else
-          throw 'Unsupported Operation: Sub-Objects'
+          throw 'Sansa detected corrupt JSON input'
 
 #----------------------------------------------------------------------
 

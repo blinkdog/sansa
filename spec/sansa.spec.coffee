@@ -514,8 +514,39 @@ describe 'sansa', ->
         expect(testObj.uuid).toBe '9195e1c1-93fe-405f-b6cf-cd0753e6f54d'
         expect(testObj.myArray[0]).toEqual new Date(1372616975455)
 
-#      it "will use registered constructors to recreate objects", ->
-#        expect(false).toBe true
+      it "will use registered constructors to create objects", ->
+        class ComplexNumber
+          constructor: (@r,@i) ->
+        sansa.registerConstructor 'ComplexNumber', ComplexNumber
+        sansa.registerInput (uuid) ->
+          return '{"»type":"ComplexNumber","r":3,"i":2}' if uuid is "1ca74e5b-a7c2-4a0f-aa4f-e350aac646ff"
+          return null
+        testObj = sansa.load '1ca74e5b-a7c2-4a0f-aa4f-e350aac646ff'
+        expect(testObj.uuid).toBe '1ca74e5b-a7c2-4a0f-aa4f-e350aac646ff'
+        expect(testObj.r).toEqual 3
+        expect(testObj.i).toEqual 2
+        expect(testObj[sansa.TYPE_TAG]).not.toBeDefined()
+        expect(testObj.constructor.name).toEqual 'ComplexNumber'
+
+      it "will use registered constructor proxies to create objects", ->
+        class ComplexNumber
+          constructor: (@r,@i) ->
+        proxyOne = (dObj, json, uuid, context) ->
+          throw 'dObj' if not dObj?
+          throw 'json' if not json?
+          throw 'uuid' if not uuid?
+          throw 'context' if not context?
+          return new ComplexNumber()
+        sansa.registerConstructorProxy 'ComplexNumber', proxyOne
+        sansa.registerInput (uuid) ->
+          return '{"»type":"ComplexNumber","r":3,"i":2}' if uuid is "1ca74e5b-a7c2-4a0f-aa4f-e350aac646ff"
+          return null
+        testObj = sansa.load '1ca74e5b-a7c2-4a0f-aa4f-e350aac646ff'
+        expect(testObj.uuid).toBe '1ca74e5b-a7c2-4a0f-aa4f-e350aac646ff'
+        expect(testObj.r).toEqual 3
+        expect(testObj.i).toEqual 2
+        expect(testObj[sansa.TYPE_TAG]).not.toBeDefined()
+        expect(testObj.constructor.name).toEqual 'ComplexNumber'
 
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee
