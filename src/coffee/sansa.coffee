@@ -10,18 +10,19 @@ outputs = new events.EventEmitter()
 
 #----------------------------------------------------------------------
 
-exports.RANGLE = RANGLE = '»'
-exports.TIME_TAG_RE = /^»[0-9]{13}$/
-exports.TYPE_TAG = TYPE_TAG = RANGLE + 'type'
-exports.UUID_RE = UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-exports.UUID_TAG_RE = /^»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+exports.RANGLE      = RANGLE      = '»'
+exports.TIME_TAG_RE = TIME_TAG_RE = /^»[0-9]{13}$/
+exports.TYPE_TAG    = TYPE_TAG    = RANGLE + 'type'
+exports.UUID_RE     = UUID_RE     = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+exports.UUID_TAG_RE = UUID_TAG_RE = /^»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
 exports.clear = ->
   inputs = []
   outputs.removeAllListeners()
 
 exports.load = (uuid) ->
-  loadObject uuid
+  loadContext = {}
+  loadObject loadContext, uuid
 
 exports.registerInput = (input) ->
   inputs.push input
@@ -79,18 +80,44 @@ dehydrate = (context, obj) ->
 
 #----------------------------------------------------------------------
 
-loadObject = (uuid) ->
+loadObject = (context, uuid) ->
+  # if we've already loaded this object, then return the one we've got
+  return context[uuid] if context[uuid]?
+  # see if we can load some JSON for the provided UUID
   json = loadJson uuid
   return null if not json?
+  # good, we got some JSON, let's make a canonical object
+  context[uuid] = {}
+  # now let's rehydrate the provided JSON into the canonical object
   dObj = JSON.parse json
   dObj.uuid = uuid
-  return dObj
+  rehydrate context, uuid, dObj
+  # return the new canonical object to the caller
+  return context[uuid]
 
 loadJson = (uuid) ->
   for input in inputs
     json = input uuid
     return json if json?
   return null
+
+rehydrate = (context, uuid, dObj) ->
+  # obtain a reference to the canonical object
+  rObj = context[uuid]
+  # rehydrate the properties of dObj into rObj
+  for key of dObj
+    switch typeof dObj[key]
+      when "boolean", "number"
+        rObj[key] = dObj[key]
+      when "string"
+        if UUID_TAG_RE.test dObj[key]
+          throw 'Unsupported Operation: Object references'
+        else if TIME_TAG_RE.test dObj[key]
+          rObj[key] = new Date(parseInt(dObj[key].substring(1), 10))
+        else
+          rObj[key] = dObj[key]
+      when "object"
+        rObj[key] = dObj[key]
 
 #----------------------------------------------------------------------
 
