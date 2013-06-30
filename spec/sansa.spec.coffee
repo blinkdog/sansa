@@ -623,5 +623,13 @@ describe 'sansa', ->
           expect(c[0][0][1]).toBe b[0][1]
           expect(c[0][0][2]).toBe b[0][2]
 
+    describe "connection to JSON stores", ->
+
+      describe "sansa-fs (File System)", ->
+        it "gets exported by sansa", ->
+          expect(sansa.connect.fs).toBeDefined()
+          expect(sansa.connect.fs.input).toBeDefined()
+          expect(sansa.connect.fs.output).toBeDefined()
+
 #----------------------------------------------------------------------
 # end of sansa.spec.coffee

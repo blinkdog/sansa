@@ -23,6 +23,9 @@ exports.clear = ->
   inputs = []
   outputs.removeAllListeners()
 
+exports.connect =
+  fs: require './sansa-fs'
+
 exports.load = (uuid) ->
   loadContext = {}
   loadObject loadContext, uuid

@@ -1,6 +1,9 @@
 {
     "name": "sansa",
-    "version": "0.1.0",
+    "version": "0.1.1",
+    "scripts": {
+        "postinstall": "cake compile"
+    },
     "dependencies": {
         "coffee-script": "1.6.x"
     },
