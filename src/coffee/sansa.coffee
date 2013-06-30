@@ -86,12 +86,16 @@ loadObject = (context, uuid) ->
   # see if we can load some JSON for the provided UUID
   json = loadJson uuid
   return null if not json?
-  # good, we got some JSON, let's make a canonical object
-  context[uuid] = {}
-  # now let's rehydrate the provided JSON into the canonical object
+  # good, we got some JSON, let's parse it into something we can rehydrate
   dObj = JSON.parse json
   dObj.uuid = uuid
-  rehydrate context, uuid, dObj
+  # create the canonical object, depending on the type
+  if dObj instanceof Array
+    context[uuid] = []
+  else
+    context[uuid] = {}
+  # now let's rehydrate the provided JSON into the canonical object
+  rehydrate context[uuid], dObj, uuid, context
   # return the new canonical object to the caller
   return context[uuid]
 
@@ -101,9 +105,7 @@ loadJson = (uuid) ->
     return json if json?
   return null
 
-rehydrate = (context, uuid, dObj) ->
-  # obtain a reference to the canonical object
-  rObj = context[uuid]
+rehydrate = (rObj, dObj, uuid, context) ->
   # rehydrate the properties of dObj into rObj
   for key of dObj
     switch typeof dObj[key]
@@ -117,7 +119,11 @@ rehydrate = (context, uuid, dObj) ->
         else
           rObj[key] = dObj[key]
       when "object"
-        rObj[key] = dObj[key]
+        if dObj[key] instanceof Array
+          rObj[key] = []
+          rehydrate rObj[key], dObj[key]
+        else
+          throw 'Unsupported Operation: Sub-Objects'
 
 #----------------------------------------------------------------------
 

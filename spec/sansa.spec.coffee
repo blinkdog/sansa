@@ -495,7 +495,7 @@ describe 'sansa', ->
 
       it "will restore empty and populated arrays", ->
         sansa.registerInput (uuid) ->
-          return '{"poorArray":[],"richArray":[false,true,42,42.5,"Slim Shady","»1372616975455"]}' if uuid is "f653729a-cd4b-4050-bb69-98fe0812a7f4"
+          return '{"poorArray":[],"richArray":[false,true,42,42.5,"Slim Shady"]}' if uuid is "f653729a-cd4b-4050-bb69-98fe0812a7f4"
           return null
         testObj = sansa.load 'f653729a-cd4b-4050-bb69-98fe0812a7f4'
         expect(testObj.uuid).toBe 'f653729a-cd4b-4050-bb69-98fe0812a7f4'
@@ -505,7 +505,14 @@ describe 'sansa', ->
         expect(testObj.richArray[2]).toEqual 42
         expect(testObj.richArray[3]).toEqual 42.5
         expect(testObj.richArray[4]).toEqual "Slim Shady"
-        expect(testObj.richArray[5]).toEqual "»1372616975455"
+
+      it "will restore Date objects contained in arrays", ->
+        sansa.registerInput (uuid) ->
+          return '{"myArray":["»1372616975455"]}' if uuid is "9195e1c1-93fe-405f-b6cf-cd0753e6f54d"
+          return null
+        testObj = sansa.load '9195e1c1-93fe-405f-b6cf-cd0753e6f54d'
+        expect(testObj.uuid).toBe '9195e1c1-93fe-405f-b6cf-cd0753e6f54d'
+        expect(testObj.myArray[0]).toEqual new Date(1372616975455)
 
 #      it "will use registered constructors to recreate objects", ->
 #        expect(false).toBe true
