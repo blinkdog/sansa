@@ -82,6 +82,9 @@ dehydrate = (context, obj) ->
 loadObject = (uuid) ->
   json = loadJson uuid
   return null if not json?
+  dObj = JSON.parse json
+  dObj.uuid = uuid
+  return dObj
 
 loadJson = (uuid) ->
   for input in inputs

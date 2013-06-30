@@ -472,6 +472,19 @@ describe 'sansa', ->
         expect(holder.input2).toHaveBeenCalledWith '4750fdaf-d3f5-46d3-a955-4f363547bbbd'
         expect(input3).not.toHaveBeenCalled()
 
+      it "will restore boolean, number, and string fields", ->
+        sansa.registerInput (uuid) ->
+          return '{"trueDat":true,"falseDat":false,"answer":42,"answerAndAHalf":42.5,"myNameIs":"Slim Shady","myFavoriteUuid":"7c9ffb5b-42cc-4c15-a9b1-a48aac4ed250"}' if uuid is "69a0b2a5-4ebd-4901-a2fc-f306d786dd41"
+          return null
+        testObj = sansa.load '69a0b2a5-4ebd-4901-a2fc-f306d786dd41'
+        expect(testObj.uuid).toBe '69a0b2a5-4ebd-4901-a2fc-f306d786dd41'
+        expect(testObj.trueDat).toBe true
+        expect(testObj.falseDat).toBe false
+        expect(testObj.answer).toBe 42
+        expect(testObj.answerAndAHalf).toBe 42.5
+        expect(testObj.myNameIs).toBe 'Slim Shady'
+        expect(testObj.myFavoriteUuid).toBe '7c9ffb5b-42cc-4c15-a9b1-a48aac4ed250'
+
 #      it "will use registered constructors to recreate objects", ->
 #        expect(false).toBe true
 
