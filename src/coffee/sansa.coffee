@@ -53,7 +53,7 @@ saveObject = (context, obj) ->
   uuid = identify obj
   context[uuid] = obj
   dObj = dehydrate context, obj
-  outputs.emit 'save', uuid, JSON.stringify(dObj), dObj, obj
+  outputs.emit 'save', uuid, JSON.stringify(dObj, null, 2), dObj, obj
 
 identify = (obj) ->
   return obj.uuid if obj.uuid? and UUID_RE.test obj.uuid
