@@ -70,25 +70,26 @@ dehydrate = (context, obj) ->
     dObj[TYPE_TAG] = type if type isnt 'Object' and type.length > 0
   # dehydrate the source object into the destination object
   for key of obj
-    switch typeof obj[key]
-      when "boolean", "number", "string"
-        dObj[key] = obj[key]
-      when "object"
-        if obj[key] instanceof Date
-          dObj[key] = RANGLE + obj[key].getTime().toString()
-        else if obj[key] instanceof Array
-          for checkArray in context.arrayList
-            if checkArray is obj[key]
-              throw "Serializing circular arrays with Sansa"
-          context.arrayList.push obj[key]
-          dObj[key] = dehydrate context, obj[key]
-          if context.arrayList.pop() isnt obj[key]
-            throw "Sansa detected corrupted save context"
-        else
-          uuid = identify obj[key]
-          if not context[uuid]?
-            saveObject context, obj[key]
-          dObj[key] = RANGLE + uuid
+    if obj[key]?
+      switch typeof obj[key]
+        when "boolean", "number", "string"
+          dObj[key] = obj[key]
+        when "object"
+          if obj[key] instanceof Date
+            dObj[key] = RANGLE + obj[key].getTime().toString()
+          else if obj[key] instanceof Array
+            for checkArray in context.arrayList
+              if checkArray is obj[key]
+                throw "Serializing circular arrays with Sansa"
+            context.arrayList.push obj[key]
+            dObj[key] = dehydrate context, obj[key]
+            if context.arrayList.pop() isnt obj[key]
+              throw "Sansa detected corrupted save context"
+          else
+            uuid = identify obj[key]
+            if not context[uuid]?
+              saveObject context, obj[key]
+            dObj[key] = RANGLE + uuid
   return dObj
 
 #----------------------------------------------------------------------

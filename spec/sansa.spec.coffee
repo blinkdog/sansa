@@ -305,7 +305,16 @@ describe 'sansa', ->
             sansa.save alice
             expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), alice
             expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), pets
-            
+
+          it "will skip keys that are null", ->
+            famous =
+              first: 'Madonna'
+              last: null
+            sansaOutput = jasmine.createSpy 'sansaOutput'
+            sansa.registerOutput sansaOutput
+            sansa.save famous
+            expect(sansaOutput).toHaveBeenCalledWith jasmine.any(String), jasmine.any(String), jasmine.any(Object), famous
+
           it "will handle arrays with objects", ->
             bob =
               type: 'Cat'
