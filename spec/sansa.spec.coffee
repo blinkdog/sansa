@@ -501,6 +501,15 @@ describe 'sansa', ->
         expect(testObj.uuid).toBe 'ed45144d-e8f4-4a26-8546-9c692dfe0294'
         expect(testObj.birthdate).toEqual new Date(1372615405870)
 
+      it "will restore Date objects from the 20th century", ->
+        testJson = '{ "oldenTimes": "»946684800000", "uuid": "afaf8f4f-ed9e-44b5-9f90-19860baf8f29" }'
+        sansa.registerInput (uuid) ->
+          return testJson if uuid is "afaf8f4f-ed9e-44b5-9f90-19860baf8f29"
+          return null
+        testObj = sansa.load 'afaf8f4f-ed9e-44b5-9f90-19860baf8f29'
+        expect(testObj.uuid).toBe 'afaf8f4f-ed9e-44b5-9f90-19860baf8f29'
+        expect(testObj.oldenTimes).toEqual new Date(946684800000)
+
       it "will restore empty and populated arrays", ->
         sansa.registerInput (uuid) ->
           return '{"poorArray":[],"richArray":[false,true,42,42.5,"Slim Shady"]}' if uuid is "f653729a-cd4b-4050-bb69-98fe0812a7f4"

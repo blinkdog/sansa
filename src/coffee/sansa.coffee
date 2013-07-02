@@ -12,7 +12,7 @@ outputs = new events.EventEmitter()
 #----------------------------------------------------------------------
 
 exports.RANGLE      = RANGLE      = '»'
-exports.TIME_TAG_RE = TIME_TAG_RE = /^»[0-9]{13}$/
+exports.TIME_TAG_RE = TIME_TAG_RE = /^»[0-9]+$/
 exports.TYPE_TAG    = TYPE_TAG    = RANGLE + 'type'
 exports.TYPE_TAG_RE = TYPE_TAG_RE = /^»type$/
 exports.UUID_RE     = UUID_RE     = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
