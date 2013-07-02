@@ -34,49 +34,82 @@ converted to UUIDs. Referenced objects are then serialized recursively.
       "b": "»4cdc768b-1164-40d6-b2f4-4b319bc289d2"
     }
 
+## Usage
+
+This is how you serialize an object graph to Sansa:
+
+    var sansa = require('sansa');
+    sansa.save(myObject);
+
+This is how you deserialize an object graph from Sansa:
+
+    var sansa = require('sansa');
+    var myObject = sansa.load('a8af7511-5dc4-40fb-bffa-a9e3b5d70a2a');
+
+The next question you might have: Where does all the JSON data go to/come from?
+
+### Input/Output Registration
+
+Connecting Sansa to a JSON store is simple. Register the functions
+that will provide or consume JSON with Sansa and they will be used
+during object graph de/serialization.
+
+#### JSON Input
+
+The function to provide JSON to Sansa should take the following form:
+
+    function jsonSource(uuid)
+    {
+        // return a String containing a block of valid JSON
+    }
+
+Sansa will provide the UUID of the object it wishes to deserialize,
+and your function should return the appropriate JSON. In practice, it
+would be used like this:
+
+    var sansa = require('sansa');
+    sansa.registerInput(jsonSource);
+    var myObject = sansa.load('a8af7511-5dc4-40fb-bffa-a9e3b5d70a2a');
+
+#### JSON Output
+
+The function to consume JSON from Sansa should take the following form:
+
+    function jsonSink(uuid, json, serializedObj, originalObj)
+    {
+        // the String content of json should be stored under key uuid
+    }
+
+Sansa will provide the UUID of the object and the JSON to be stored
+under that key. In practice, it would be used like this:
+
+    var sansa = require('sansa');
+    sansa.registerOutput(jsonSink);
+    sansa.save(myObject);
+
+Sansa also provides the serialized object (the object upon which
+JSON.stringify was called to generate the JSON) and the original object
+to be serialized. In practice, you need not worry about the last two
+parameters, they are for advanced customization purposes only.
+
+#### Multiple Registration
+
+You can register as many input and output functions as you want.
+In the input case, Sansa will query them in the order provided until
+one of them returns a valid block of JSON. In the output case, Sansa
+will call all of them every time an object is serialized.
+
+To see Sansa in action, you might register the following output function:
+
+    sansa.registerOutput(function(uuid, json) {
+        console.log(uuid, json);
+    });
+
 ## TODO: FINISH DOCUMENTATION
-Yep, I need to finish this documentation.
 
-## Design Considerations
-
-I wanted to preserve the Array structure in the JSON output. That is,
-although an Array is also a JavaScript object in its own right, I did
-not want to serialize every instance of an Array separately as its
-own object. There are two reasons for this:
-
-1. The JSON format supports arrays natively, Arrays flow naturally
-   along with object definition. To add a layer of indirection when
-   the target format offers support seems wasteful and foolish.
-
-2. When serializing an Array as an object, each key would also be
-   serialized. That is, what would normally be represented as:
-
-    [ "abc", "def", "ghi", "jkl", "mno" ]
-
-   Instead gets represented as:
-
-    [ "0":"abc", "1":"def", "2":"ghi", "3":"jkl", "4":"mno" ]
-
-   So ignoring native support for a layer of indirection also requires
-   explicit specification of what should be natural/implicit keys?
-   Again, wasteful and foolish.
-
-However, there is a tradeoff. Because of the lack of indirection, a
-circular array specification cannot be properly serialized;
-
-    x = []
-    x[0] = x
-    sansa.save(x)      # this will throw an exception!
-
-Circular structure in objects (where references translate to UUIDs)
-works fine in Sansa. Circular structure in arrays (where we don't
-translate to UUIDs, to avoid the problems mentioned above) can't
-be resolved into intelligible JSON.
-
-Because none of my arrays are circular, I'm willing to live with
-this trade-off. I'd rather have nice output JSON and live without
-the circular arrays (utility of which is highly dubious?) than the
-other way around.
+### Constructor and Constructor Proxy Registration
+### Limitations
+### Future Plans
 
 ## Why is it named 'Sansa'?
 
@@ -86,4 +119,4 @@ after her.
 
 This library written in CoffeeScript for Node.js is the sister library
 to Arya. It does object graph serialization for JavaScript. So I named
-this library after Arya's sister Sansa Stark.
+this library after Arya Stark's sister Sansa Stark.
