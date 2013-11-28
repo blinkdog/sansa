@@ -1,6 +1,6 @@
 {
     "name": "sansa",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "scripts": {
         "postinstall": "cake compile"
     },
@@ -17,5 +17,10 @@
         "type": "git",
         "url": "https://github.com/blinkdog/sansa.git"
     },
-    "license" : "Copyright 2013 Patrick Meade. All rights reserved."
+    "licenses": [
+        {
+            "type": "GNU Affero General Public License, Version 3",
+            "url": "https://www.gnu.org/licenses/agpl-3.0.txt"
+        }
+    ]
 }
