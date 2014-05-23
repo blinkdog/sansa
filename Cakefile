@@ -1,5 +1,5 @@
 # Cakefile
-# Copyright 2013 Patrick Meade.
+# Copyright 2014 Patrick Meade.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -35,17 +35,15 @@ task 'test', 'Test with Jasmine specs', ->
 clean = (callback) ->
   exec 'rm -fR lib/*', (err, stdout, stderr) ->
     throw err if err
-#    console.log "Project cleaned"
     callback?()
 
 compile = (callback) ->
-  exec 'coffee -o lib/ -c src/coffee', (err, stdout, stderr) ->
+  exec 'node_modules/coffee-script/bin/coffee -o lib/ -c src/coffee', (err, stdout, stderr) ->
     throw err if err
-#    console.log "Compiled CoffeeScript src/coffee -> lib"
     callback?()
 
 test = (callback) ->
-  exec 'jasmine-node --verbose --noStack --coffee spec/', (err, stdout, stderr) =>
+  exec 'node_modules/jasmine-node/bin/jasmine-node --verbose --noStack --coffee spec/', (err, stdout, stderr) ->
     console.log stdout + stderr
     if stdout.indexOf("Failures") >= 0
       throw "Failed: Jasmine Tests" 

@@ -250,6 +250,17 @@ would be just fine:
 If you need circular arrays, you'll need to modify Sansa to accomodate your
 objects, or your objects to accomodate Sansa.
 
+## Development
+
+In order to make modifications to Sansa, you'll need to establish a
+development environment:
+
+    git clone https://github.com/blinkdog/sansa.git
+    npm install
+    cake rebuild
+
+The source files are located in src/coffee
+
 ## Why is it named 'Sansa'?
 
 Arya Stark is my favorite character from [A Song of Ice and Fire](http://en.wikipedia.org/wiki/A_Song_of_Ice_and_Fire),
