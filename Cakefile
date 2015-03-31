@@ -1,5 +1,5 @@
 # Cakefile
-# Copyright 2014 Patrick Meade.
+# Copyright 2015 Patrick Meade.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -17,37 +17,57 @@
 
 {exec} = require 'child_process'
 
-task 'build', 'Build the library', ->
-  compile -> test()
+#----------------------------------------------------------------------------
+
+task 'check', 'Check dependency versions', ->
+  project = require './package.json'
+  for dependency of project.dependencies
+    checkVersion dependency, project.dependencies[dependency]
+  for dependency of project.devDependencies
+    checkVersion dependency, project.devDependencies[dependency]
 
 task 'clean', 'Remove build cruft', ->
   clean()
 
-task 'compile', 'Compile CoffeeScript to JavaScript', ->
-  compile()
+task 'coverage', 'Perform test coverage analysis', ->
+  clean -> compile -> test -> coverage()
 
-task 'rebuild', 'Rebuild the library', ->
+task 'rebuild', 'Rebuild the module', ->
   clean -> compile -> test()
-  
-task 'test', 'Test with Jasmine specs', ->
-  test()
+
+#----------------------------------------------------------------------------
 
 clean = (callback) ->
-  exec 'rm -fR lib/*', (err, stdout, stderr) ->
+  exec 'rm -fR lib/* test/*', (err, stdout, stderr) ->
     throw err if err
     callback?()
 
 compile = (callback) ->
-  exec 'node_modules/coffee-script/bin/coffee -o lib/ -c src/coffee', (err, stdout, stderr) ->
+  exec "node_modules/.bin/coffee -o lib/ -c src/main/coffee", (err, stdout, stderr) ->
     throw err if err
-    callback?()
+    exec "node_modules/.bin/coffee -o test/ -c src/test/coffee", (err, stdout, stderr) ->
+      throw err if err
+      callback?()
+
+coverage = (callback) ->
+  exec 'node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- --recursive', (err, stdout, stderr) ->
+    throw err if err
+    exec 'firefox --new-tab coverage/lcov-report/index.html', (err, stdout, stderr) ->
+      throw err if err
+      callback?()
 
 test = (callback) ->
-  exec 'node_modules/jasmine-node/bin/jasmine-node --verbose --noStack --coffee spec/', (err, stdout, stderr) ->
+  exec 'node_modules/.bin/mocha --colors --recursive', (err, stdout, stderr) ->
     console.log stdout + stderr
-    if stdout.indexOf("Failures") >= 0
-      throw "Failed: Jasmine Tests" 
-    callback?()
+    callback?() if stderr.indexOf("AssertionError") < 0
 
-#----------------------------------------------------------------------
+#----------------------------------------------------------------------------
+
+checkVersion = (dependency, version) ->
+  exec "npm --json info #{dependency}", (err, stdout, stderr) ->
+    depInfo = JSON.parse stdout
+    if depInfo['dist-tags'].latest isnt version
+      console.log "[OLD] #{dependency} is out of date #{version} vs. #{depInfo['dist-tags'].latest}"
+
+#----------------------------------------------------------------------------
 # end of Cakefile

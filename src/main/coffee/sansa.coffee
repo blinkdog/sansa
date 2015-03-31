@@ -1,5 +1,5 @@
 # sansa.coffee
-# Copyright 2013 Patrick Meade.
+# Copyright 2015 Patrick Meade.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -166,7 +166,7 @@ rehydrate = (rObj, dObj, uuid, context) ->
 
 # See: http://stackoverflow.com/a/2117523
 exports.newUuid = newUuid = ->
-  rndBuf = crypto.randomBytes 32
+  rndBuf = crypto.pseudoRandomBytes 32
   count = 0
   "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace /[xy]/g, (c) ->
     rndByte = rndBuf.readUInt8(count++) & 0x0f

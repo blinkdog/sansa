@@ -1,6 +1,6 @@
 {
     "name": "sansa",
-    "version": "0.1.6",
+    "version": "0.2.0",
     "description": "Object graph serialization library.",
     "keywords": [
         "cycle",
@@ -26,7 +26,10 @@
         "url": "https://github.com/blinkdog/sansa.git"
     },
     "devDependencies": {
-        "coffee-script": "1.7.x",
-        "jasmine-node": "1.14.x"
+        "coffee-script": "1.9.1",
+        "istanbul": "0.3.13",
+        "mocha": "2.2.1",
+        "should": "5.2.0",
+        "underscore": "1.8.2"
     }
 }
