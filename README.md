@@ -54,6 +54,8 @@ Obtain the JSON for the provided object's UUID.
     * `err` Error: An error, if any (AryaMemory never passes an Error)
     * `json` String: The JSON of the requested object
 
+Example:
+
     mem.input('a94beae2-881e-4e26-9fb4-de4f0f478abf', function(err, json) {
       if(err != null) {
         // handle error
@@ -68,6 +70,8 @@ Store the JSON of an object under the provided UUID.
 * `json` String: The JSON of the object to put in the JSON store
 * `callback` Function: function callback(err)
     * `err` Error: An error, if any (AryaMemory never passes an Error)
+
+Example:
 
     mem.output('a94beae2-881e-4e26-9fb4-de4f0f478abf', '{}', function(err) {
       if(err != null) {
@@ -97,6 +101,8 @@ the callback to be provided with the object after deserialization (`callback`).
 * `callback` Function: function callback(err, obj)
     * `err` Error: An error, if any are encountered while loading
     * `obj` Object: The object and connected object graph, loaded from JSON
+
+Example:
 
     arya.load('a94beae2-881e-4e26-9fb4-de4f0f478abf', mem.input, function(err, obj) {
       if(err != null) {
@@ -173,6 +179,8 @@ Serialize an object graph to JSON
 * `next` Function: function next(uuid, json, callback)
     * `err` Error: An error, if any occurs while serializing the object graph
     * `uuid` String: the UUID of the object as stored in the JSON store
+
+Example:
 
     arya.save({ name: "Bob" }, mem.output, function(err, uuid) {
       if(err != null) {
