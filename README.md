@@ -2,28 +2,25 @@
 Object graph serialization library in CoffeeScript for Node.js
 
 ## Motivation
-
 When using JSON to serialize complex object graphs, it is easy to create a 
 very large block of JSON with full representations of embedded objects. Even
 worse, it is easy to create an object graph with cycles, which leads to a
-TypeError: Converting circular structure to JSON.
+`TypeError: Converting circular structure to JSON`.
 
-There is no easy way to overcome these problems. You can remove all the cycles
-from your object graph and be careful how you call JSON.stringify(); 
+There is no easy way to overcome these problems. The best we can hope for
+is to remove all the cycles from our object graphs and be careful how we
+call `JSON.stringify();`
 
-## Sansa's Solution
-
-Sansa breaks the object graph serialization problem into the smaller problem
-of serializing a bunch of small objects. The simple contents (boolean, number,
+## sansa's Solution
+sansa breaks the object graph serialization problem into the problem of
+serializing a number of small objects. The simple contents (boolean, number,
 string, etc.) are serialized directly to JSON. References to other objects are
 converted to UUIDs. Referenced objects are then serialized recursively.
 
 ### Object Graph with Cycles in JSON
-
     { "a": { "b": { "a": ... TypeError: Converting circular structure to JSON
 
-### Object Graph with Cycles in Sansa
-
+### Object Graph with Cycles in sansa
     {
       "uuid": "4cdc768b-1164-40d6-b2f4-4b319bc289d2",
       "a": "»211379b8-b9c0-4202-9c4b-a399aa18e11b"
@@ -34,208 +31,202 @@ converted to UUIDs. Referenced objects are then serialized recursively.
       "b": "»4cdc768b-1164-40d6-b2f4-4b319bc289d2"
     }
 
-## Usage
-
-This is how you serialize an object graph to Sansa:
-
-    var sansa = require('sansa');
-    sansa.save(myObject);
-
-This is how you deserialize an object graph from Sansa:
+## Component API
+sansa provides two components in its main module:
 
     var sansa = require('sansa');
-    var myObject = sansa.load('a8af7511-5dc4-40fb-bffa-a9e3b5d70a2a');
+    var Arya = sansa.Arya;
+    var AryaMemory = sansa.AryaMemory;
 
-The next question you might have: Where does all the JSON data go to/come from?
+### AryaMemory
+`AryaMemory` is an in-memory JSON store. Its functions can be provided
+directly to Arya for object graph de/serialization.
 
-### Input/Output Registration
+An `AryaMemory` is constructed like any other object in JavaScript:
 
-Connecting Sansa to a JSON store is simple. Register the functions
-that will provide or consume JSON with Sansa and they will be used
-during object graph de/serialization.
+    var mem = new AryaMemory();
 
-#### JSON Input
+#### AryaMemory.input(uuid, callback)
+Obtain the JSON for the provided object's UUID.
 
-The function to provide JSON to Sansa should take the following form:
+* `uuid` String: The UUID of the object for which to obtain JSON
+* `callback` Function: function callback(err, json)
+    * `err` Error: An error, if any (AryaMemory never passes an Error)
+    * `json` String: The JSON of the requested object
 
-    function jsonSource(uuid)
-    {
-        // return a String containing a block of valid JSON
-    }
-
-Sansa will provide the UUID of the object it wishes to deserialize,
-and your function should return the appropriate JSON. In practice, it
-would be used like this:
-
-    var sansa = require('sansa');
-    sansa.registerInput(jsonSource);
-    var myObject = sansa.load('a8af7511-5dc4-40fb-bffa-a9e3b5d70a2a');
-
-#### JSON Output
-
-The function to consume JSON from Sansa should take the following form:
-
-    function jsonSink(uuid, json, serializedObj, originalObj)
-    {
-        // the String content of json should be stored under key uuid
-    }
-
-Sansa will provide the UUID of the object and the JSON to be stored
-under that key. In practice, it would be used like this:
-
-    var sansa = require('sansa');
-    sansa.registerOutput(jsonSink);
-    sansa.save(myObject);
-
-Sansa also provides the serialized object (the object upon which
-JSON.stringify was called to generate the JSON) and the original object
-to be serialized. In practice, you need not worry about the last two
-parameters, they are for advanced customization purposes only.
-
-#### Multiple Registration
-
-You can register as many input and output functions as you want.
-In the input case, Sansa will query them in the order provided until
-one of them returns a valid block of JSON. In the output case, Sansa
-will call all of them every time an object is serialized.
-
-To see Sansa in action, you might register the following output function:
-
-    var sansa = require('sansa');
-    sansa.registerOutput(function(uuid, json) {
-        console.log(uuid, json);
+    mem.input('a94beae2-881e-4e26-9fb4-de4f0f478abf', function(err, json) {
+      if(err != null) {
+        // handle error
+      }
+      // do something with json
     });
 
-## Advanced Usage
+#### AryaMemory.output(uuid, json, callback)
+Store the JSON of an object under the provided UUID.
 
-In most cases, the basic functionality of Sansa will suffice. Object graphs
-can be serialized to JSON and deserialized from JSON sources. However, there
-are a few use-cases where more finesse may be required.
+* `uuid` String: The UUID of the object to put in the JSON store
+* `json` String: The JSON of the object to put in the JSON store
+* `callback` Function: function callback(err)
+    * `err` Error: An error, if any (AryaMemory never passes an Error)
 
-### Typed Objects
+    mem.output('a94beae2-881e-4e26-9fb4-de4f0f478abf', '{}', function(err) {
+      if(err != null) {
+        // handle error
+      }
+    });
 
-Most objects handled by Sansa will probably be of type 'Object'. When this
-is the case, Sansa will omit the type. The implicit assumption is that an
-object is of type 'Object'.
+### Arya
+`Arya` is the object responsible for serialization and deserialization
+of object graphs.
 
-There are some objects that are created by constructors. These objects have
-a type other than 'Object'. Sansa will serialize the name of the type along
-with the object.
+An `Arya` is constructed like any other object in JavaScript:
 
-When deserializing, Sansa will attempt to look up the name of the
-constructor, in order to call it. If you serialize objects that require
-constructors, you MUST register the constructor with Sansa before
-you attempt to deserialize from the JSON.
+    var arya = new Arya();
 
-    var Point = function Point(x,y) { this.x=x; this.y=y; }
-    var sansa = require('sansa');
-    sansa.registerConstructor("Point", Point);
-    var myPoint = sansa.load('37dfb8b9-8c57-4519-880f-226e73a123d9');
-    
-#### Constructor Proxies
+#### Arya.load(uuid, src, callback)
+Load an object graph from a JSON store. Caller provides the UUID of the
+object to be returned (`uuid`), a callback to the JSON store (`src`), and
+the callback to be provided with the object after deserialization (`callback`).
 
-Some constructors need to be called with parameters. In the case of
-Point above, the "x" and "y" fields can be easily deserialized after
-construction. Other constructors are more complex.
+* `uuid` String: The UUID of the object to load
+* `src` Function: function src(uuid, callback)
+    * `uuid` String: The UUID of the object to be loaded from the JSON store
+    * `callback` Function: function callback(err, json)
+        * `err` Error: An error, if any occur while reading from the store
+        * `json` String: The JSON of the requested object
+* `callback` Function: function callback(err, obj)
+    * `err` Error: An error, if any are encountered while loading
+    * `obj` Object: The object and connected object graph, loaded from JSON
 
-In this case, it is possible to register a constructor proxy function.
-The constructor proxy function takes the form:
+    arya.load('a94beae2-881e-4e26-9fb4-de4f0f478abf', mem.input, function(err, obj) {
+      if(err != null) {
+        // handle error
+      }
+      // do something with obj (an object with attached object graph)
+    });
+
+#### Arya.register(name, constr, proxy)
+Register a constructor or constructor proxy with Arya.
+
+* `name` String: the name of the constructor
+* `constr` Function: the constructor, or a constructor proxy function
+* `proxy` Boolean: true, iff the function provided is a constructor proxy
+
+When serializing an object graph from JavaScript objects into JSON, sansa
+will record the type of an object with a named constructor. When deserializing
+the object graph back from the JSON, sansa will need a reference to the
+constructor in order to re-create the object.
+
+If there are no special conditions, and a simple no-argument call to new
+will suffice, then you can just pass the constructor itself to Arya. sansa
+will handle the call to `new` internally:
+
+    var ComplexNumber = function ComplexNumber(real, imag) {
+        // do something with the real and imag values here
+    };
+
+    arya.register("ComplexNumber", ComplexNumber);
+
+If there are special conditions for calling the constructor, you may
+instead pass a constructor proxy to Arya. sansa ***WILL NOT*** call
+`new` for you in this case. Your proxy function must do that. You
+pass `true` as the third argument, in order to indicate that the
+function provided is a proxy.
+
+    var ComplexNumber = function ComplexNumber(real, imag) {
+        // do something with the real and imag values here
+    };
+
+    var complexProxy = function complexProxy() {
+        var num = new ComplexNumber(1, 0);
+        return num;
+    };
+
+    arya.register("ComplexNumber", complexProxy, true);
+
+The constructor proxy function is provided with four arguments:
 
     function constructorProxy(dObj, json, uuid, context)
-    {
-        // dObj = the raw result of JSON.parse
-        // json = the JSON for this object
-        // uuid = the uuid of the object
-        // context = Sansa's own context (for very advanced use only)
 
-        return new Point(0,0)
-    }
+* `dObj` Object: the raw result of JSON.parse 
+* `json` String: the JSON for this object
+* `uuid` String: the UUID of the object
+* `context` Object: sansa's own context object
 
-The function is provided with all the information that Sansa has about
-the object at the time. It is expected to return a properly constructed
-object to Sansa. You register the constructor proxy function as follows:
+sansa's context object contains references to the incomplete object
+graph that is currently under construction. It represents everything
+sansa knows about the object graph at the time of the call to the
+constructor proxy.
 
-    var sansa = require('sansa');
-    sansa.registerConstructorProxy("Point", constructorProxy);
-    var myPoint = sansa.load('37dfb8b9-8c57-4519-880f-226e73a123d9');
+All of this is really advanced usage. Most of the time, you can
+simply ignore the parameters to the constructor proxy function.
 
-If you register a constructor, Sansa will call "new" for you.
-If you register a proxy, the proxy is responsible for calling "new".
+#### Arya.save(obj, sink, next) 
+Serialize an object graph to JSON
 
-### Clearing State
+* `obj` Object: object in graph to be stored
+* `sink` Function: function sink(uuid, json, callback)
+    * `uuid` String: The UUID of the object to put in the JSON store
+    * `json` String: The JSON of the object to put in the JSON store
+    * `callback` Function: function callback(err)
+        * `err` Error: An error, if any occurs while writing to the store
+* `next` Function: function next(uuid, json, callback)
+    * `err` Error: An error, if any occurs while serializing the object graph
+    * `uuid` String: the UUID of the object as stored in the JSON store
 
-If you want to reset Sansa's state, you can do so with the following:
-
-    var sansa = require('sansa');
-    sansa.clear();
-
-This will remove all registered input sources, output sinks, and constructors.
-
-## JSON Stores
-
-Connecting Sansa to JSON stores is described above and pretty simple. My
-goal for the future is to create more packages (sansa-mongo, sansa-mysql,
-sansa-pgsql, etc.) that enable plug-and-play connections to JSON stores.
-
-### sansa-fs (File System)
-
-Because the File System ('fs') is built into Node.js, I thought it would
-be handy to include sansa-fs as an example JSON store. It needs no extra
-dependencies, and demonstrates how a JSON store might be used.
-
-    var sansa = require('sansa');
-    sansa.registerInput(sansa.connect.fs.input('/path/to/my/json/directory'));
-    sansa.registerOutput(sansa.connect.fs.output('/path/to/my/json/directory'));
-    var myObject = sansa.load('817e3b31-3cf7-47eb-ba96-c3fc90caf868');
+    arya.save({ name: "Bob" }, mem.output, function(err, uuid) {
+      if(err != null) {
+        // handle error
+      }
+      // do something with the uuid (the uuid of the provided object)
+    });
 
 ## Limitations
-Generally, if you make use of fields or values that begin with the
-character '»' you might run into trouble unless you modify Sansa.
+If you make use of fields or values that begin with the character '»'
+you might run into trouble unless you modify sansa.
 
 ### Reserved field: uuid
-
-Sansa tags every object with the field 'uuid'. If you are using that field to
-store an actual v4 uuid in String form, that is no problem. Sansa can reuse
-your own identifiers. If you need that field for something else, you'll need
-to modify Sansa so that it can work with your objects.
+sansa tags every object in the graph with the field 'uuid'. If you are
+using that field to store an actual v4 UUID in String form, that is no
+problem. sansa can reuse your own identifiers. If you need that field
+for something other than a v4 UUID in String form, you'll need to modify
+sansa so that it can work with your objects.
 
 ### Reserved field: »type
-
-Sansa makes use of the character '»' to create special tags in the
+sansa makes use of the character '»' to create special tags in the
 JSON. There is one special key:
 
     /^»type$/       Used to store the name of an object's constructor
 
 ### Reserved value: /^»[0-9]+$/
-
-Sansa interprets the regular expression /^»[0-9]+$/ to be a Date object
+sansa interprets the regular expression `/^»[0-9]+$/` to be a `Date` object
 stored in the format of milliseconds after the unix epoch.
 
 ### Reserved value: /^»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
-
-Sansa interprets the regular expression
-/^»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+sansa interprets the regular expression
+`/^»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/`
 to be a reference to another object.
 
 ### Identical constructor names
-
-Sansa has no special way of telling identically named (but differently scoped)
-constructors apart. If you have two packages which both define a Point class
-with different constructors, you may need to modify Sansa in order to serialize
-and deserialize object graphs correctly.
+sansa has no special way of telling identically named (but differently scoped)
+constructors apart. For example, if you have two packages which both define a
+`Point` class, each with different constructors, you may need to modify sansa
+in order to serialize and deserialize your object graphs correctly.
 
 ### Circular arrays
-
-Object graphs with circular references aren't a problem for Sansa. However,
-circular array references are difficult to serialize to JSON without some
-ugly hacks to properly restore them.
+Object graphs with circular ***object*** references aren't a problem for
+sansa. However, circular ***array*** references are difficult to serialize
+to JSON without some ugly hacks to properly restore them.
 
     var arrayA = [1, 2, 3];
     var arrayB = [4, 5, 6];
     arrayA[3] = arrayB;
     arrayB[3] = arrayA;
-    var sansa = require('sansa');
-    sansa.save(arrayA);
+    var Arya = require('sansa').Arya;
+    var arya = new Arya();
+    arya.save(arrayA, mem.output, function(err, uuid) {
+        // there will be an error passed here!
+    });
 
 Attempting to serialize this will result in an error. However the following
 would be just fine:
@@ -244,36 +235,43 @@ would be just fine:
     var b = { array: [4, 5, 6] };
     a.array[3] = b;
     b.array[3] = a;
-    var sansa = require('sansa');
-    sansa.save(a);
+    var Arya = require('sansa').Arya;
+    var arya = new Arya();
+    arya.save(a, mem.output, function(err, uuid) {
+        // no error here, just a uuid
+    });
 
-If you need circular arrays, you'll need to modify Sansa to accomodate your
-objects, or your objects to accomodate Sansa.
+If you need circular arrays, you'll need to modify sansa to accomodate your
+objects, or your objects to accomodate sansa.
 
 ## Development
-
-In order to make modifications to Sansa, you'll need to establish a
+In order to make modifications to sansa, you'll need to establish a
 development environment:
 
     git clone https://github.com/blinkdog/sansa.git
+    cd sansa
+    ./configure
     npm install
     cake rebuild
 
-The source files are located in src/coffee
+### Code Coverage
+You can see the [istanbul](https://www.npmjs.com/package/istanbul) coverage
+report for sansa with a task in the cake file:
 
-## Why is it named 'Sansa'?
+    cake coverage
 
-Arya Stark is my favorite character from [A Song of Ice and Fire](http://en.wikipedia.org/wiki/A_Song_of_Ice_and_Fire),
-so I wrote an object graph serialization library for Java, and named it
-after her.
+This task will attempt to open the coverage report in a new tab in
+Mozilla Firefox. If you use another browser, you'll need to modify
+the `Cakefile` to specify your preferred command for viewing the
+coverage report.
 
-This library written in CoffeeScript for Node.js is the sister library
-to Arya. It does object graph serialization for JavaScript. So I named
-this library after Arya Stark's sister, Sansa Stark.
+### Source files
+The source files are located in `src/main/coffee`.
+
+The test source files are located in `src/test/coffee`.
 
 ## License
-
-Sansa is Copyright 2013 Patrick Meade.
+sansa is Copyright 2015 Patrick Meade.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

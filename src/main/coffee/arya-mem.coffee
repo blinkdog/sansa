@@ -1,4 +1,4 @@
-# sansa-fs.coffee
+# arya-mem.coffee
 # Copyright 2015 Patrick Meade.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -15,38 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #----------------------------------------------------------------------
 
-fs = require 'fs'
-path = require 'path'
-options =
-  encoding: 'utf8'
+NO_ERROR = null
 
-exports.testWith = (mocks) ->
-  if mocks.fs?
-    {fs} = mocks
-  else
-    fs = require 'fs'
-  if mocks.path?
-    {path} = mocks
-  else
-    path = require 'path'
-  if mocks.options?
-    {options} = mocks
-  else
-    options =
-      encoding: 'utf8'
+class AryaMemory
+  constructor: ->
+    @_store = {}
 
-exports.input = (directory) ->
-  return (uuid) ->
-    jsonPath = path.join directory, uuid
-    if fs.existsSync jsonPath
-      return fs.readFileSync jsonPath, options
-    return null
+  input: (uuid, next) =>
+    next NO_ERROR, @_store[uuid]
+      
+  output: (uuid, json, next) =>
+    @_store[uuid] = json
+    next?(NO_ERROR)
 
-exports.output = (directory) ->
-  return (uuid, json, dObj, sObj) ->
-    jsonPath = path.join directory, uuid
-    fs.writeFile jsonPath, json, options, (err) ->
-      throw err if err
+exports.AryaMemory = AryaMemory
 
 #----------------------------------------------------------------------
-# end of sansa-fs.coffee
+# end of arya-mem.coffee
