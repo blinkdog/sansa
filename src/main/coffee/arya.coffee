@@ -97,10 +97,13 @@ class Arya
       else
         if dObj[TYPE_TAG]?
           rObjCons = @_constructors[dObj[TYPE_TAG]]
-          if rObjCons.__proxy
-            context[uuid] = rObjCons(dObj, json, uuid, context)
+          if rObjCons?
+            if rObjCons.__proxy
+              context[uuid] = rObjCons(dObj, json, uuid, context)
+            else
+              context[uuid] = new rObjCons()
           else
-            context[uuid] = new rObjCons()
+            return next new Error("Unregisterd constructor " + dObj[TYPE_TAG]);
         else
           context[uuid] = {}
       # now let's rehydrate the provided JSON into the canonical object
