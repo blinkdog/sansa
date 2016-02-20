@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #----------------------------------------------------------------------
 
-crypto = require 'crypto'
+crypto = require "crypto"
 
 NO_ERROR    = null
-RANGLE      = '»'
+RANGLE      = "»"
 TIME_TAG_RE = /^»[0-9]+$/
-TYPE_TAG    = RANGLE + 'type'
+TYPE_TAG    = RANGLE + "type"
 TYPE_TAG_RE = /^»type$/
 UUID_RE     = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 UUID_TAG_RE = /^»[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
@@ -38,7 +38,7 @@ class Arya
     @_constructors[name].__proxy = proxy
 
   save: (obj, sink, next) ->
-    if (not obj?) or ((typeof obj) isnt 'object') or (obj instanceof Array)  
+    if (not obj?) or ((typeof obj) isnt "object") or (obj instanceof Array)  
       return next new Error("cannot save #{obj}")
     NEW_CONTEXT =
       arrayList: []
@@ -53,7 +53,7 @@ class Arya
       dObj = {}
       # save the type of the source object
       type = obj.constructor.name
-      dObj[TYPE_TAG] = type if type isnt 'Object' and type.length > 0
+      dObj[TYPE_TAG] = type if type isnt "Object" and type.length > 0
     # dehydrate the source object into the destination object
     for key of obj
       if obj[key]?
@@ -103,7 +103,7 @@ class Arya
             else
               context[uuid] = new rObjCons()
           else
-            return next new Error("Unregisterd constructor " + dObj[TYPE_TAG]);
+            return next new Error("Unregistered constructor #{dObj[TYPE_TAG]}")
         else
           context[uuid] = {}
       # now let's rehydrate the provided JSON into the canonical object
