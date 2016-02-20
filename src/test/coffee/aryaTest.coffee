@@ -393,5 +393,16 @@ describe "arya", ->
         arya.load TEST_UUID, mem.input, (err, obj) ->
           done() if err?
 
+    describe "unregistered constructors", ->
+      it "will pass an error for an unregistered constructor", (done) ->
+        TEST_UUID = "ef74185a-aaf7-4382-9618-5103065d317f"
+        mem._store =
+          '3296ceec-deee-4f60-9e35-6ef6d602dd7b': '{\n  "»type": "Vertex",\n  "x": 1,\n  "y": 1,\n  "z": 1,\n  "uuid": "3296ceec-deee-4f60-9e35-6ef6d602dd7b"\n}'
+          '3b2d3f4b-d1ba-4450-8e08-aa073dd0f0dc': '{\n  "»type": "Vertex",\n  "x": 2,\n  "y": 2,\n  "z": 2,\n  "uuid": "3b2d3f4b-d1ba-4450-8e08-aa073dd0f0dc"\n}'
+          'a1415701-a98c-49b0-a3a2-8e95bcc9aecf': '{\n  "»type": "Vertex",\n  "x": 3,\n  "y": 3,\n  "z": 3,\n  "uuid": "a1415701-a98c-49b0-a3a2-8e95bcc9aecf"\n}'
+          'ef74185a-aaf7-4382-9618-5103065d317f': '{\n  "»type": "Triangle",\n  "v1": "»3296ceec-deee-4f60-9e35-6ef6d602dd7b",\n  "v2": "»3b2d3f4b-d1ba-4450-8e08-aa073dd0f0dc",\n  "v3": "»a1415701-a98c-49b0-a3a2-8e95bcc9aecf",\n  "uuid": "ef74185a-aaf7-4382-9618-5103065d317f"\n}'
+        arya.load TEST_UUID, mem.input, (err, obj) ->
+          done() if err?
+
 #----------------------------------------------------------------------
 # end of aryaTest.coffee
