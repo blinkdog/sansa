@@ -1,5 +1,5 @@
 # aryaTest.coffee
-# Copyright 2015 Patrick Meade.
+# Copyright 2015-2016 Patrick Meade.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #----------------------------------------------------------------------
 
-should = require 'should'
-{Arya} = require '../lib/arya'
+should = require "should"
+{Arya} = require "../lib/arya"
 {AryaMemory} = require "../lib/arya-mem"
 
 arya = null
@@ -146,7 +146,7 @@ describe "arya", ->
         arya.load uuid, mem.input, (err, obj) ->
           throw err if err?
           should.exist obj
-          obj.should.have.properties ['falseDat', 'trueDat']
+          obj.should.have.properties ["falseDat", "trueDat"]
           obj.falseDat.should.equal false
           obj.trueDat.should.equal true
           obj.should.not.equal TEST_OBJ
@@ -162,7 +162,7 @@ describe "arya", ->
         arya.load uuid, mem.input, (err, obj) ->
           throw err if err?
           should.exist obj
-          obj.should.have.property 'birthdate'
+          obj.should.have.property "birthdate"
           obj.birthdate.should.eql new Date(1427915590)
           obj.should.not.equal TEST_OBJ
           obj.should.eql TEST_OBJ
@@ -171,7 +171,7 @@ describe "arya", ->
     it "can restore objects using constructors", (done) ->
       class ComplexNumber
         constructor: (@r, @i) ->
-      arya.register 'ComplexNumber', ComplexNumber
+      arya.register "ComplexNumber", ComplexNumber
       TEST_OBJ = new ComplexNumber 2, 3
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
         throw err if err?
@@ -180,7 +180,7 @@ describe "arya", ->
           throw err if err?
           should.exist obj
           obj.constructor.name.should.equal "ComplexNumber"
-          obj.should.have.properties ['i', 'r']
+          obj.should.have.properties ["i", "r"]
           obj.r.should.equal 2
           obj.i.should.equal 3
           obj.should.not.equal TEST_OBJ
@@ -194,7 +194,7 @@ describe "arya", ->
         rObj = new ComplexNumber 0, 0
         rObj.square = (x) -> x * x
         return rObj
-      arya.register 'ComplexNumber', constrProxy, true
+      arya.register "ComplexNumber", constrProxy, true
       TEST_OBJ = new ComplexNumber 2, 3
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
         throw err if err?
@@ -203,7 +203,7 @@ describe "arya", ->
           throw err if err?
           should.exist obj
           obj.constructor.name.should.equal "ComplexNumber"
-          obj.should.have.properties ['i', 'r', 'square']
+          obj.should.have.properties ["i", "r", "square"]
           obj.r.should.equal 2
           obj.i.should.equal 3
           obj.square(2).should.equal 4
@@ -221,8 +221,8 @@ describe "arya", ->
         arya.load uuid, mem.input, (err, obj) ->
           throw err if err?
           should.exist obj
-          obj.should.have.properties ['alice', 'carol']
-          obj.should.not.have.property 'bob'
+          obj.should.have.properties ["alice", "carol"]
+          obj.should.not.have.property "bob"
           obj.uuid.should.equal uuid
           obj.alice.should.equal "Alice"
           obj.carol.should.equal "Carol"
@@ -295,7 +295,7 @@ describe "arya", ->
         rObj = new ComplexNumber 0, 0
         rObj.square = (x) -> x * x
         # forgot to: return rObj
-      arya.register 'ComplexNumber', constrProxy, true
+      arya.register "ComplexNumber", constrProxy, true
       TEST_OBJ = new ComplexNumber 2, 3
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
         throw err if err?
@@ -323,7 +323,7 @@ describe "arya", ->
         throw "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
           should.exist obj
-          obj.should.have.properties ['alice', 'bob']
+          obj.should.have.properties ["alice", "bob"]
           obj.uuid.should.equal uuid
           obj.alice.should.equal "Alice"
           should(obj.bob).equal null
