@@ -1,5 +1,5 @@
 # sansa
-Object graph serialization library in CoffeeScript for Node.js
+Object graph serialization library for Node.js, written in CoffeeScript.
 
 ## Motivation
 When using JSON to serialize complex object graphs, it is easy to create a 
@@ -122,6 +122,9 @@ When serializing an object graph from JavaScript objects into JSON, sansa
 will record the type of an object with a named constructor. When deserializing
 the object graph back from the JSON, sansa will need a reference to the
 constructor in order to re-create the object.
+
+As of sansa v0.3.2, failure to register a constructor that is necessary for
+deserialization will be passed as an error. (Thanks to @qbradq)
 
 If there are no special conditions, and a simple no-argument call to new
 will suffice, then you can just pass the constructor itself to Arya. sansa
@@ -279,7 +282,8 @@ The source files are located in `src/main/coffee`.
 The test source files are located in `src/test/coffee`.
 
 ## License
-sansa is Copyright 2015 Patrick Meade.
+sansa  
+Copyright 2015-2016 Patrick Meade.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -291,5 +295,6 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
-You should have received a copy of the [GNU Affero General Public License](https://www.gnu.org/licenses/agpl-3.0.txt)
+You should have received a copy of the
+[GNU Affero General Public License](https://www.gnu.org/licenses/agpl-3.0.txt)
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
