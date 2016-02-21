@@ -110,38 +110,60 @@ class Arya
         else
           context[uuid] = {}
       # now let's rehydrate the provided JSON into the canonical object
-      @_rehydrate context[uuid], dObj, context, uuid, src, (err) ->
-        next err if err?
-      # return the new canonical object to the caller
-      next NO_ERROR, context[uuid]
+      @_rehydrate context[uuid], dObj, context, uuid, src, next
 
   _rehydrate: (rObj, dObj, context, uuid, src, next) ->
-    # rehydrate the properties of dObj into rObj
+    # an array of promises to rehydrate a property of the object
+    rehydrates = []
+    # for each property of dObj
     for key of dObj
-      switch typeof dObj[key]
-        when "boolean", "number"
-          rObj[key] = dObj[key]
-        when "string"
-          if TYPE_TAG_RE.test key
-            if rObj.constructor.name isnt dObj[key]
-              return next new Error("constructor error detected")
+      # create a Promise to rehydrate the property into rObj
+      rehydrates.push @_rehydratePromise rObj, dObj, key, context, uuid, src, next
+    # after all the properties have been rehydrated, pass it
+    Promise.all(rehydrates)
+    .then ->
+      return next NO_ERROR, rObj
+    .catch (err) ->
+      return next err
+
+  _rehydratePromise: (rObj, dObj, key, context, uuid, src, next) ->
+    switch typeof dObj[key]
+      when "boolean", "number"
+        rObj[key] = dObj[key]
+        return Promise.resolve rObj
+      when "string"
+        if TYPE_TAG_RE.test key
+          if rObj.constructor.name isnt dObj[key]
+            return Promise.reject new Error("constructor error detected")
           else
-            if UUID_TAG_RE.test dObj[key]
+            return Promise.resolve rObj
+        else
+          if UUID_TAG_RE.test dObj[key]
+            return new Promise (resolve, reject) =>
               @_loadObject context, dObj[key].substring(1), src, (err, obj) ->
-                return next err if err?
-                rObj[key] = obj
-            else if TIME_TAG_RE.test dObj[key]
-              rObj[key] = new Date(parseInt(dObj[key].substring(1), 10))
-            else
-              rObj[key] = dObj[key]
-        when "object"
-          if dObj[key] instanceof Array
-            rObj[key] = []
-            @_rehydrate rObj[key], dObj[key], context, uuid, src, (err) ->
-              next err if err?
+                if err?
+                  reject err
+                else
+                  rObj[key] = obj
+                  resolve rObj
+          else if TIME_TAG_RE.test dObj[key]
+            rObj[key] = new Date(parseInt(dObj[key].substring(1), 10))
+            return Promise.resolve rObj
           else
-            return next new Error("corrupt JSON input detected")
-    return next NO_ERROR
+            rObj[key] = dObj[key]
+            return Promise.resolve rObj
+      when "object"
+        if dObj[key] instanceof Array
+          rObj[key] = []
+          return new Promise (resolve, reject) =>
+            @_rehydrate rObj[key], dObj[key], context, uuid, src, (err, obj) ->
+              if err?
+                reject err
+              else
+                resolve rObj
+        else
+          return Promise.reject new Error("corrupt JSON input detected")
+    return Promise.reject new Error("unable to rehydrate")
 
   _saveObject: (context, obj, sink, next) ->
     context.depth++
