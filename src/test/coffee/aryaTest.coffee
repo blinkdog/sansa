@@ -83,11 +83,11 @@ describe "arya", ->
   describe "features", ->
     it "can round trip an empty object", (done) ->
       arya.save {}, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "uuid === null" if not uuid?
+        return done err if err?
+        return done "uuid === null" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
-          throw "obj === null" if not obj?
+          return done err if err?
+          return done "obj === null" if not obj?
           done() if obj.uuid is uuid
 
     it "can round trip an identified object", (done) ->
@@ -95,11 +95,11 @@ describe "arya", ->
       TEST_OBJ =
         uuid: TEST_UUID
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if uuid isnt TEST_UUID
+        return done err if err?
+        return done "bad uuid" if uuid isnt TEST_UUID
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
-          throw "obj === null" if not obj?
+          return done err if err?
+          return done "obj === null" if not obj?
           done() if obj.uuid is TEST_UUID
 
     it "is better than JSON.stringify", (done) ->
@@ -108,10 +108,10 @@ describe "arya", ->
       x.ref = y
       y.ref = x
       arya.save x, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           should.exist obj.uuid
           should.exist obj.ref
@@ -124,10 +124,10 @@ describe "arya", ->
       TEST_OBJ =
         numbers: [1,2,3,4,5]
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           should.exist obj.numbers
           obj.numbers.length.should.equal 5
@@ -141,10 +141,10 @@ describe "arya", ->
         falseDat: false
         trueDat: true
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           obj.should.have.properties ["falseDat", "trueDat"]
           obj.falseDat.should.equal false
@@ -157,10 +157,10 @@ describe "arya", ->
       TEST_OBJ =
         birthdate: new Date(1427915590)
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           obj.should.have.property "birthdate"
           obj.birthdate.should.eql new Date(1427915590)
@@ -174,10 +174,10 @@ describe "arya", ->
       arya.register "ComplexNumber", ComplexNumber
       TEST_OBJ = new ComplexNumber 2, 3
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           obj.constructor.name.should.equal "ComplexNumber"
           obj.should.have.properties ["i", "r"]
@@ -197,10 +197,10 @@ describe "arya", ->
       arya.register "ComplexNumber", constrProxy, true
       TEST_OBJ = new ComplexNumber 2, 3
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           obj.constructor.name.should.equal "ComplexNumber"
           obj.should.have.properties ["i", "r", "square"]
@@ -216,10 +216,10 @@ describe "arya", ->
         bob: null
         carol: "Carol"
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           obj.should.have.properties ["alice", "carol"]
           obj.should.not.have.property "bob"
@@ -248,10 +248,10 @@ describe "arya", ->
         name: "Myself I. Me"
         friends: [ ALICE, BOB, CAROL, DAVE ]
       arya.save ME, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "uuid === null" if not uuid?
+        return done err if err?
+        return done "uuid === null" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           obj.should.not.equal ME
           obj.should.eql ME
@@ -273,10 +273,10 @@ describe "arya", ->
         name: "Me"
         bestFriend: DAVE
       arya.save ME, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "uuid === null" if not uuid?
+        return done err if err?
+        return done "uuid === null" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           obj.uuid.should.equal uuid
           obj.bestFriend.name.should.equal "Dave"
@@ -298,8 +298,8 @@ describe "arya", ->
       arya.register "ComplexNumber", constrProxy, true
       TEST_OBJ = new ComplexNumber 2, 3
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
           done() if err?
           
@@ -307,8 +307,8 @@ describe "arya", ->
       TEST_OBJ =
         alice: "Alice"
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         srcWithErrors = (uuid, next) ->
           next new Error("bad mojo in the json store")
         arya.load uuid, srcWithErrors, (err, obj) ->
@@ -319,8 +319,8 @@ describe "arya", ->
         alice: "Alice"
         bob: "»f8320f1e-3fb7-4626-8b84-62531b1e35bc"
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         arya.load uuid, mem.input, (err, obj) ->
           should.exist obj
           obj.should.have.properties ["alice", "bob"]
@@ -335,8 +335,8 @@ describe "arya", ->
         alice: "Alice"
         bob: "»f8320f1e-3fb7-4626-8b84-62531b1e35bc"
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         first = true
         srcWithErrors = (uuid, next) ->
           return mem.input uuid, next if uuid isnt "f8320f1e-3fb7-4626-8b84-62531b1e35bc"
@@ -349,8 +349,8 @@ describe "arya", ->
         alice: "Alice"
         friends: [ "»f8320f1e-3fb7-4626-8b84-62531b1e35bc" ]
       arya.save TEST_OBJ, mem.output, (err, uuid) ->
-        throw err if err?
-        throw "bad uuid" if not uuid?
+        return done err if err?
+        return done "bad uuid" if not uuid?
         first = true
         srcWithErrors = (uuid, next) ->
           return mem.input uuid, next if uuid isnt "f8320f1e-3fb7-4626-8b84-62531b1e35bc"
@@ -362,9 +362,9 @@ describe "arya", ->
       it "can load an array from corrupted json", (done) ->
         TEST_UUID = "aa08610b-9ab7-47cf-ab06-2b01be988c97"
         mem.output TEST_UUID, "[1,2,3,4,5]", (err) ->
-          throw err if err?
+          return done err if err?
         arya.load TEST_UUID, mem.input, (err, obj) ->
-          throw err if err?
+          return done err if err?
           should.exist obj
           obj.uuid.should.equal TEST_UUID
           obj.should.be.an.array
@@ -389,7 +389,7 @@ describe "arya", ->
         """
         TEST_UUID = "aa08610b-9ab7-47cf-ab06-2b01be988c97"
         mem.output TEST_UUID, TEST_JSON, (err) ->
-          throw err if err?
+          return done err if err?
         arya.load TEST_UUID, mem.input, (err, obj) ->
           done() if err?
 
@@ -403,7 +403,7 @@ describe "arya", ->
         """
         TEST_UUID = "b1b00370-238a-44c1-bd5e-2af4a8c91f82"
         mem.output TEST_UUID, TEST_JSON, (err) ->
-          throw err if err?
+          return done err if err?
         arya.load TEST_UUID, mem.input, (err, obj) ->
           done() if err?
 
@@ -417,6 +417,27 @@ describe "arya", ->
           'ef74185a-aaf7-4382-9618-5103065d317f': '{\n  "»type": "Triangle",\n  "v1": "»3296ceec-deee-4f60-9e35-6ef6d602dd7b",\n  "v2": "»3b2d3f4b-d1ba-4450-8e08-aa073dd0f0dc",\n  "v3": "»a1415701-a98c-49b0-a3a2-8e95bcc9aecf",\n  "uuid": "ef74185a-aaf7-4382-9618-5103065d317f"\n}'
         arya.load TEST_UUID, mem.input, (err, obj) ->
           done() if err?
+
+    describe "faulty json sinks", ->
+      it "will pass errors given by broken json sinks", (done) ->
+        count = 0
+        sink = (uuid, json, next) ->
+          count++
+          if count < 2
+            return next null
+          else
+            return next new Error "database corrupted by Daleks"
+        ALICE =
+          name: "Alice"
+        BOB =
+          name: "Bob"
+          bestFriend: ALICE
+        CAROL =
+          name: "Carol"
+          bestFriend: BOB
+        arya.save CAROL, sink, (err, uuid) ->
+          return done() if err? and err.message is "database corrupted by Daleks"
+          done new Error "sink error was not passed!"
 
 #----------------------------------------------------------------------
 # end of aryaTest.coffee

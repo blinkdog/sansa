@@ -40,12 +40,9 @@ class Arya
   save: (obj, sink, next) ->
     if (not obj?) or ((typeof obj) isnt "object") or (obj instanceof Array)  
       return next new Error("cannot save #{obj}")
-    NEW_CONTEXT =
-      arrayList: []
-      depth: 0
-    @_saveObject NEW_CONTEXT, obj, sink, next
+    @_saveObject {}, [], obj, sink, next
 
-  _dehydrate: (context, obj, sink, next) ->
+  _dehydrate: (context, arrayList, obj, sink, next) ->
     # create an appropriate destination object
     if obj instanceof Array
       dObj = []
@@ -54,28 +51,58 @@ class Arya
       # save the type of the source object
       type = obj.constructor.name
       dObj[TYPE_TAG] = type if type isnt "Object" and type.length > 0
-    # dehydrate the source object into the destination object
+    # an array of promises to dehydrate a property of the object
+    dehydrates = []
+    # for each property of obj
     for key of obj
-      if obj[key]?
-        switch typeof obj[key]
-          when "boolean", "number", "string"
-            dObj[key] = obj[key]
-          when "object"
-            if obj[key] instanceof Date
-              dObj[key] = RANGLE + obj[key].getTime().toString()
-            else if obj[key] instanceof Array
-              for checkArray in context.arrayList
-                if checkArray is obj[key]
-                  return next new Error("circular arrays error detected")
-              context.arrayList.push obj[key]
-              dObj[key] = @_dehydrate context, obj[key], sink, next
-              context.arrayList.pop()
-            else
-              uuid = @_identify obj[key]
-              if not context[uuid]?
-                @_saveObject context, obj[key], sink, next
-              dObj[key] = RANGLE + uuid
-    return dObj
+      # create a Promise to dehydrate the property into dObj
+      dehydrates.push @_dehydratePromise context, arrayList, obj, key, dObj, sink, next
+    # after all the properties have been dehydrated, pass it
+    Promise.all(dehydrates)
+    .then ->
+      return next NO_ERROR, dObj
+    .catch (err) ->
+      return next err
+      
+  _dehydratePromise: (context, arrayList, obj, key, dObj, sink, next) ->
+    # don't save null properties
+    return Promise.resolve dObj if not obj[key]?
+    # dehydrate the property of source object into the destination object
+    switch typeof obj[key]
+      when "boolean", "number", "string"
+        dObj[key] = obj[key]
+        return Promise.resolve dObj
+      when "object"
+        if obj[key] instanceof Date
+          dObj[key] = RANGLE + obj[key].getTime().toString()
+          return Promise.resolve dObj
+        else if obj[key] instanceof Array
+          for checkArray in arrayList
+            if checkArray is obj[key]
+              return Promise.reject new Error("circular arrays error detected")
+          return new Promise (resolve, reject) =>
+            myArrayList = arrayList.slice 0
+            myArrayList.push obj[key]
+            @_dehydrate context, myArrayList, obj[key], sink, (err, myObj) ->
+              if err?
+                reject err
+              else
+                dObj[key] = myObj
+                resolve dObj
+        else
+          uuid = @_identify obj[key]
+          if not context[uuid]?
+            return new Promise (resolve, reject) =>
+              @_saveObject context, arrayList, obj[key], sink, (err, myObj) ->
+                if err?
+                  reject err
+                else
+                  dObj[key] = RANGLE + uuid
+                  resolve dObj
+          else
+            dObj[key] = RANGLE + uuid
+            return Promise.resolve dObj
+    return Promise.reject new Error("unable to dehydrate")
 
   _identify: (obj) ->
     return obj.uuid if obj.uuid?
@@ -165,16 +192,14 @@ class Arya
           return Promise.reject new Error("corrupt JSON input detected")
     return Promise.reject new Error("unable to rehydrate")
 
-  _saveObject: (context, obj, sink, next) ->
-    context.depth++
+  _saveObject: (context, arrayList, obj, sink, next) ->
     uuid = @_identify obj
     context[uuid] = obj
-    dObj = @_dehydrate context, obj, sink, next
-    json = JSON.stringify dObj, null, 2
-    context.depth--
-    sink uuid, json, (err) ->
-      if context.depth is 0
-        next err, uuid
+    @_dehydrate context, arrayList, obj, sink, (err, dObj) ->
+      return next err if err?
+      json = JSON.stringify dObj, null, 2
+      sink uuid, json, (err2) ->
+        next err2, uuid
 
   _uuid: ->
     count = 0
