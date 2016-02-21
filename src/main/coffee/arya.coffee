@@ -89,7 +89,10 @@ class Arya
       return next err if err?
       return next NO_ERROR, null if not json?
       # good, we got some JSON, let's parse it into something we can rehydrate
-      dObj = JSON.parse json
+      try
+        dObj = JSON.parse json
+      catch parseException
+        return next parseException
       dObj.uuid = uuid
       # create the canonical object, depending on the type
       if dObj instanceof Array

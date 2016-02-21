@@ -393,6 +393,20 @@ describe "arya", ->
         arya.load TEST_UUID, mem.input, (err, obj) ->
           done() if err?
 
+      it "will pass an error for JSON.parse exceptions", (done) ->
+        TEST_JSON = """
+          {
+            "name": "Alice",
+            ryusez: (HADOUKEN!)  # <-- THIS IS NOT VALID JSON!!! -->,
+            "uuid": "b1b00370-238a-44c1-bd5e-2af4a8c91f82"
+          }
+        """
+        TEST_UUID = "b1b00370-238a-44c1-bd5e-2af4a8c91f82"
+        mem.output TEST_UUID, TEST_JSON, (err) ->
+          throw err if err?
+        arya.load TEST_UUID, mem.input, (err, obj) ->
+          done() if err?
+
     describe "unregistered constructors", ->
       it "will pass an error for an unregistered constructor", (done) ->
         TEST_UUID = "ef74185a-aaf7-4382-9618-5103065d317f"
