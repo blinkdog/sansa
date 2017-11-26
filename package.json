@@ -1,7 +1,7 @@
 {
     "name": "sansa",
-    "version": "0.4.0",
-    "description": "Object graph serialization library.",
+    "version": "1.0.0",
+    "description": "Object graph serialization library",
     "keywords": [
         "cycle",
         "data",
@@ -16,21 +16,26 @@
     "license": "AGPL-3.0",
     "author": "Patrick Meade <veloxi@ticon.net>",
     "files": [
-        "LICENSE",
-        "README.md",
+        "CHANGELOG.md",
         "index.js",
         "lib",
-        "package.json"
+        "LICENSE",
+        "package.json",
+        "README.md"
     ],
     "main": "index",
     "repository": {
         "type": "git",
         "url": "https://github.com/blinkdog/sansa.git"
     },
+    "dependencies": {
+        "underscore": "1.8.3",
+        "uuid": "3.1.0"
+    },
     "devDependencies": {
-        "coffee-script": "1.10.0",
-        "istanbul": "0.4.2",
-        "mocha": "2.4.5",
-        "should": "8.2.2"
+        "coffeescript": "2.0.2",
+        "istanbul": "1.1.0-alpha.1",
+        "mocha": "4.0.1",
+        "should": "13.1.3"
     }
 }

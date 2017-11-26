@@ -1,5 +1,5 @@
-# arya-mem.coffee
-# Copyright 2015 Patrick Meade.
+# SansaMemoryTest.coffee
+# Copyright 2017 Patrick Meade.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -15,20 +15,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #----------------------------------------------------------------------
 
-NO_ERROR = null
+should = require "should"
+{SansaMemory} = require "../lib/SansaMemory"
 
-class AryaMemory
-  constructor: ->
-    @_store = {}
+TEST_UUID = "11faa8f9-c87d-44df-90af-461c4a280c21"
 
-  input: (uuid, next) =>
-    next NO_ERROR, @_store[uuid]
-      
-  output: (uuid, json, next) =>
-    @_store[uuid] = json
-    next?(NO_ERROR)
+describe "SansaMemory", ->
+  mem = null
 
-exports.AryaMemory = AryaMemory
+  beforeEach ->
+    mem = new SansaMemory()
+
+  it "can be constructed", ->
+    should.exist mem
+
+  it "can store json output", ->
+    (mem.write TEST_UUID, "{}").should.be.fulfilledWith TEST_UUID
+
+  it "can retrieve json input", ->
+    uuid = await mem.write TEST_UUID, "{}"
+    (mem.read TEST_UUID).should.be.fulfilledWith "{}"
+
+  it "has independent instances", ->
+    otherMem = new SansaMemory()
+    uuid = await mem.write TEST_UUID, "{}"
+    (otherMem.read TEST_UUID).should.be.fulfilledWith undefined
 
 #----------------------------------------------------------------------
-# end of arya-mem.coffee
+# end of SansaMemoryTest.coffee

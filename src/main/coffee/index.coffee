@@ -1,6 +1,5 @@
-#!/bin/bash
-# configure
-# Copyright 2015 Patrick Meade.
+# index.coffee
+# Copyright 2017 Patrick Meade.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -14,11 +13,10 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#----------------------------------------------------------------------------
+#----------------------------------------------------------------------
 
-mkdir -p coverage
-mkdir -p lib
-mkdir -p test
+exports.Sansa = require("./Sansa").Sansa
+exports.SansaMemory = require("./SansaMemory").SansaMemory
 
-#----------------------------------------------------------------------------
-# end of configure
+#----------------------------------------------------------------------
+# end of index.coffee

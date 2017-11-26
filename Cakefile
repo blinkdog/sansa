@@ -1,5 +1,5 @@
 # Cakefile
-# Copyright 2015-2016 Patrick Meade.
+# Copyright 2017 Patrick Meade.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -41,29 +41,29 @@ task "rebuild", "Rebuild the module", ->
 
 #----------------------------------------------------------------------------
 
-clean = (callback) ->
+clean = (next) ->
   exec "rm -fR lib/* test/*", (err, stdout, stderr) ->
     throw err if err
-    callback?()
+    next?()
 
-compile = (callback) ->
+compile = (next) ->
   exec "node_modules/.bin/coffee -o lib/ -c src/main/coffee", (err, stdout, stderr) ->
     throw err if err
     exec "node_modules/.bin/coffee -o test/ -c src/test/coffee", (err, stdout, stderr) ->
       throw err if err
-      callback?()
+      next?()
 
-coverage = (callback) ->
+coverage = (next) ->
   exec "node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- --recursive", (err, stdout, stderr) ->
     throw err if err
     exec "#{BROWSER_COMMAND} coverage/lcov-report/index.html", (err, stdout, stderr) ->
       throw err if err
-      callback?()
+      next?()
 
-test = (callback) ->
+test = (next) ->
   exec "node_modules/.bin/mocha --colors --recursive", (err, stdout, stderr) ->
     console.log stdout + stderr
-    callback?() if stderr.indexOf("AssertionError") < 0
+    next?() if stderr.indexOf("AssertionError") < 0
 
 #----------------------------------------------------------------------------
 
